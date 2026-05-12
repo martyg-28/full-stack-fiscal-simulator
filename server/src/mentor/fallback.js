@@ -103,6 +103,34 @@ export function fallbackMentor({ question = "", mode = "explain", depth = "stand
   let keyConcept = "Why the model moved";
   let answer = "";
 
+  if (mode === "socratic-seminar") {
+    // Short, voice-friendly. Acknowledge briefly, then push back with a
+    // single probing question routed by what the student just said.
+    const sustain = Math.round(context?.summary?.sustainabilityScore ?? 0);
+    const viability = Math.round(context?.summary?.politicalViability ?? 0);
+    const debt = Math.round(context?.summary?.debtToGdp2056 ?? 0);
+    const probe = leverKey
+      ? `If you push ${leverKey.replace(/([A-Z])/g, " $1").toLowerCase().trim()} further, which constituency pays the cost first?`
+      : stressKey
+        ? `What policy in your current package would actually buffer that ${stressKey.replace(/([A-Z])/g, " $1").toLowerCase().trim()}?`
+        : q.includes("political") || q.includes("pass")
+          ? `Your viability is ${viability}. What concession would you trade to get five more points — and from whom?`
+          : q.includes("debt") || q.includes("deficit")
+            ? `Debt ends near ${debt}% of GDP. If you could only change one lever to bend that curve, which would it be and why?`
+            : `What is your group optimizing for — sustainability, viability, resilience, or fairness? Pick one and defend it.`;
+    const ack = leverKey || stressKey
+      ? `Interesting. Your package scores ${sustain} on sustainability and ${viability} on viability right now.`
+      : `Good. Let's push on that.`;
+    return {
+      answer: `${ack} ${probe}`,
+      keyConcept: "Socratic seminar",
+      historicalPrecedent: null,
+      tradeoff: buildTradeoff(context),
+      discussionQuestion: probe,
+      confidenceNote: "Voice seminar mode. Studium is an exploratory classroom model, not an official fiscal forecast.",
+    };
+  }
+
   if (mode === "historical-case" || q.includes("precedent") || q.includes("history") || q.includes("histor")) {
     const p = findBestPrecedent(question, context) || historicalPrecedents[0];
     keyConcept = "Historical precedent";

@@ -20,6 +20,13 @@ export const suggestedPrompts = {
     "What did the 1970s teach us?",
     "How did 2008 stimulus play out?",
   ],
+  "socratic-seminar": [
+    "I think my package is sustainable",
+    "Defense posture should be lower",
+    "Raise the Social Security cap",
+    "We can't pass this politically",
+    "Climate spending is too expensive",
+  ],
 };
 
 export const depthLabels = {
@@ -33,4 +40,5 @@ export const modeLabels = {
   "debate-prep": "Debate prep",
   "professor-prompt": "Professor prompt",
   "historical-case": "Historical case",
+  "socratic-seminar": "Socratic (voice)",
 };

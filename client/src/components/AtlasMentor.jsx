@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { suggestedPrompts, depthLabels, modeLabels } from "../lib/atlasPrompts.js";
+import { useSpeech } from "../hooks/useSpeech.js";
 
 const INTRO = {
   answer:
-    "Hi, I'm Atlas. I help students reason about why the model moves and how to defend their policy package. Ask me anything, or tap a prompt below.",
+    "Hi, I'm Atlas. I help students reason about why the model moves and how to defend their policy package. Ask me anything, or tap a prompt below. Switch to voice mode and we can run a Socratic seminar.",
   keyConcept: "Welcome",
 };
 
@@ -12,6 +13,7 @@ export default function AtlasMentor({ context, externalAsk }) {
   const [pulse, setPulse] = useState(false);
   const [mode, setMode] = useState("explain");
   const [depth, setDepth] = useState("standard");
+  const [voiceOn, setVoiceOn] = useState(false);
   const [messages, setMessages] = useState([{ role: "atlas", content: INTRO }]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -41,6 +43,21 @@ export default function AtlasMentor({ context, externalAsk }) {
     }
   }, [messages, open]);
 
+  const speech = useSpeech({
+    onFinalTranscript: (text) => {
+      // When the student stops talking, send their transcript through the
+      // mentor pipeline in socratic-seminar mode and speak the answer.
+      ask(text, "socratic-seminar");
+    },
+  });
+
+  // Auto-flip to socratic mode when voice opens; restore on close.
+  useEffect(() => {
+    if (voiceOn) setMode("socratic-seminar");
+    else if (mode === "socratic-seminar") setMode("explain");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voiceOn]);
+
   async function ask(question, forcedMode) {
     if (!question.trim() || busy) return;
     const useMode = forcedMode || mode;
@@ -56,6 +73,10 @@ export default function AtlasMentor({ context, externalAsk }) {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       setMessages((prev) => [...prev, { role: "atlas", content: data }]);
+      // If voice mode is on (or we just got a socratic reply), speak the answer.
+      if (voiceOn || useMode === "socratic-seminar") {
+        speech.speak(data.answer);
+      }
     } catch (error) {
       setMessages((prev) => [
         ...prev,
@@ -75,6 +96,21 @@ export default function AtlasMentor({ context, externalAsk }) {
 
   const chips = useMemo(() => suggestedPrompts[mode] || [], [mode]);
 
+  function toggleVoice() {
+    if (!speech.supported) return;
+    if (voiceOn) {
+      speech.stop();
+      speech.cancelSpeech();
+    }
+    setVoiceOn((v) => !v);
+  }
+
+  function toggleListening() {
+    if (!speech.supported) return;
+    if (speech.listening) speech.stop();
+    else speech.start();
+  }
+
   return (
     <>
       {!open && (
@@ -89,34 +125,67 @@ export default function AtlasMentor({ context, externalAsk }) {
         </button>
       )}
       {open && (
-        <div className="atlas-panel" role="dialog" aria-label="Atlas Macro Mentor">
+        <div className={`atlas-panel ${voiceOn ? "voice-mode" : ""}`} role="dialog" aria-label="Atlas Macro Mentor">
           <header className="atlas-header">
-            <div className="avatar">🌐</div>
+            <div className="avatar">{voiceOn ? "🎙" : "🌐"}</div>
             <div>
               <h3>Atlas · Macro Mentor</h3>
-              <small>Ask why the model moved.</small>
+              <small>{voiceOn ? "Voice seminar mode" : "Ask why the model moved."}</small>
             </div>
+            <button
+              type="button"
+              className={`voice-toggle ${voiceOn ? "on" : ""}`}
+              onClick={toggleVoice}
+              disabled={!speech.supported}
+              title={speech.supported ? "Toggle voice mode" : "Voice not supported in this browser"}
+              aria-pressed={voiceOn}
+            >
+              {voiceOn ? "Voice on" : "Voice"}
+            </button>
             <button className="close" onClick={() => setOpen(false)} aria-label="Close Atlas">×</button>
           </header>
 
-          <div className="atlas-controls">
-            <div>
-              <label>Mode</label>
-              <select value={mode} onChange={(e) => setMode(e.target.value)}>
-                {Object.entries(modeLabels).map(([id, label]) => (
-                  <option key={id} value={id}>{label}</option>
-                ))}
-              </select>
+          {!voiceOn && (
+            <div className="atlas-controls">
+              <div>
+                <label>Mode</label>
+                <select value={mode} onChange={(e) => setMode(e.target.value)}>
+                  {Object.entries(modeLabels).map(([id, label]) => (
+                    <option key={id} value={id}>{label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label>Depth</label>
+                <select value={depth} onChange={(e) => setDepth(e.target.value)}>
+                  {Object.entries(depthLabels).map(([id, label]) => (
+                    <option key={id} value={id}>{label}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div>
-              <label>Depth</label>
-              <select value={depth} onChange={(e) => setDepth(e.target.value)}>
-                {Object.entries(depthLabels).map(([id, label]) => (
-                  <option key={id} value={id}>{label}</option>
-                ))}
-              </select>
+          )}
+
+          {voiceOn && (
+            <div className="voice-stage">
+              <button
+                type="button"
+                className={`mic-btn ${speech.listening ? "listening" : ""} ${speech.speaking ? "speaking" : ""}`}
+                onClick={toggleListening}
+                disabled={busy || speech.speaking}
+                aria-label={speech.listening ? "Stop listening" : "Start listening"}
+              >
+                <span className="mic-glyph">{speech.speaking ? "🔊" : speech.listening ? "■" : "🎙"}</span>
+              </button>
+              <div className="voice-status">
+                {speech.speaking && "Atlas is speaking — listen, then hit the mic to reply."}
+                {!speech.speaking && speech.listening && (speech.interim ? `Heard: "${speech.interim}"` : "Listening… speak now.")}
+                {!speech.speaking && !speech.listening && busy && "Atlas is thinking…"}
+                {!speech.speaking && !speech.listening && !busy && "Press the mic and explain your reasoning. Atlas will push back with a Socratic question."}
+              </div>
+              {speech.error && <div className="voice-error">{speech.error}</div>}
             </div>
-          </div>
+          )}
 
           <div className="atlas-messages" ref={scrollRef}>
             {messages.map((msg, i) => (
@@ -125,26 +194,36 @@ export default function AtlasMentor({ context, externalAsk }) {
             {busy && <AtlasBubble role="atlas" content={{ answer: "Thinking…" }} />}
           </div>
 
-          <div className="atlas-chips">
-            {chips.map((chip) => (
-              <button key={chip} className="atlas-chip" onClick={() => ask(chip)} disabled={busy}>
-                {chip}
-              </button>
-            ))}
-          </div>
+          {!voiceOn && (
+            <>
+              <div className="atlas-chips">
+                {chips.map((chip) => (
+                  <button key={chip} className="atlas-chip" onClick={() => ask(chip)} disabled={busy}>
+                    {chip}
+                  </button>
+                ))}
+              </div>
 
-          <form
-            className="atlas-input"
-            onSubmit={(e) => { e.preventDefault(); ask(input); }}
-          >
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask Atlas about your policy package…"
-            />
-            <button type="submit" disabled={busy || !input.trim()}>Send</button>
-          </form>
+              <form
+                className="atlas-input"
+                onSubmit={(e) => { e.preventDefault(); ask(input); }}
+              >
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Ask Atlas about your policy package…"
+                />
+                <button type="submit" disabled={busy || !input.trim()}>Send</button>
+              </form>
+            </>
+          )}
+
+          {voiceOn && !speech.supported && (
+            <div className="voice-fallback">
+              This browser doesn't support the Web Speech API. Try Chrome or Edge to use voice mode.
+            </div>
+          )}
         </div>
       )}
     </>
