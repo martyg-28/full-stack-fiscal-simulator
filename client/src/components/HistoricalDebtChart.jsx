@@ -14,10 +14,11 @@ export default function HistoricalDebtChart({ rows }) {
   const [hover, setHover] = useState(null);
 
   const W = 1000;
-  const H = 360;
-  const padding = { left: 80, right: 60, top: 28, bottom: 50 };
+  const H = 380;
+  const padding = { left: 80, right: 180, top: 36, bottom: 52 };
   const yMin = 0;
   const yMax = 260;
+  const MIN_LABEL_GAP = 18;
 
   const xs = useMemo(() => {
     const startYear = rows[0]?.year ?? 2026;
@@ -29,10 +30,23 @@ export default function HistoricalDebtChart({ rows }) {
     const { startYear, endYear } = xs;
     return padding.left + ((year - startYear) / (endYear - startYear)) * (W - padding.left - padding.right);
   }
-
   function yFor(value) {
     return padding.top + (1 - (value - yMin) / (yMax - yMin)) * (H - padding.top - padding.bottom);
   }
+
+  // Lay reference-line labels out vertically with a minimum gap so the
+  // clustered (100/105/119) labels stop overlapping. Walk top-down: each
+  // label's labelY is at most (previous labelY + MIN_LABEL_GAP).
+  const labels = useMemo(() => {
+    const sorted = [...REFERENCE_LINES].sort((a, b) => b.value - a.value);
+    let lastY = -Infinity;
+    return sorted.map((ref) => {
+      const lineY = yFor(ref.value);
+      const labelY = Math.max(lineY, lastY + MIN_LABEL_GAP);
+      lastY = labelY;
+      return { ...ref, lineY, labelY };
+    });
+  }, [/* labels depend only on constants */]);
 
   const pathD = rows.map((row, i) => `${i === 0 ? "M" : "L"} ${xFor(row.year).toFixed(1)} ${yFor(row.debtToGdp).toFixed(1)}`).join(" ");
 
@@ -40,6 +54,12 @@ export default function HistoricalDebtChart({ rows }) {
   const xTicks = [2026, 2031, 2036, 2041, 2046, 2051, 2056];
 
   const peak = rows.reduce((acc, r) => (r.debtToGdp > acc.debtToGdp ? r : acc), rows[0]);
+  // Anchor the peak callout away from the right edge so it never clips.
+  const peakX = Math.min(xFor(peak.year), W - padding.right - 20);
+  const peakAnchor = peakX > W - padding.right - 50 ? "end" : "middle";
+
+  const labelX = W - padding.right + 12; // labels sit in the right gutter
+  const chartRightX = W - padding.right;
 
   return (
     <div className="map-stage" style={{ position: "relative" }}>
@@ -54,7 +74,7 @@ export default function HistoricalDebtChart({ rows }) {
         {/* y axis */}
         {yTicks.map((t) => (
           <g key={t}>
-            <line x1={padding.left} y1={yFor(t)} x2={W - padding.right} y2={yFor(t)} stroke="rgba(12,42,54,0.08)" strokeDasharray="2 4" />
+            <line x1={padding.left} y1={yFor(t)} x2={chartRightX} y2={yFor(t)} stroke="rgba(12,42,54,0.08)" strokeDasharray="2 4" />
             <text x={padding.left - 10} y={yFor(t) + 4} textAnchor="end" fontFamily="JetBrains Mono, monospace" fontSize="10" fill="#5e7480">{t}%</text>
           </g>
         ))}
@@ -67,25 +87,24 @@ export default function HistoricalDebtChart({ rows }) {
           </g>
         ))}
 
-        {/* reference lines */}
-        {REFERENCE_LINES.map((ref) => {
+        {/* reference lines (hover hits) */}
+        {labels.map((ref) => {
           const isHover = hover === ref.id;
           return (
-            <g key={ref.id} onMouseEnter={() => setHover(ref.id)} onMouseLeave={() => setHover(null)} style={{ cursor: "pointer" }}>
-              <line
-                x1={padding.left}
-                y1={yFor(ref.value)}
-                x2={W - padding.right}
-                y2={yFor(ref.value)}
-                stroke={isHover ? "#1f6b3a" : "#0c2a36"}
-                strokeOpacity={isHover ? 1 : 0.45}
-                strokeWidth={isHover ? 1.2 : 0.8}
-                strokeDasharray="6 4"
-              />
-              <text x={W - padding.right - 6} y={yFor(ref.value) - 4} textAnchor="end" fontFamily="JetBrains Mono, monospace" fontSize="10" letterSpacing="0.10em" fill={isHover ? "#1f6b3a" : "#2a4756"} style={{ textTransform: "uppercase" }}>
-                {ref.label} · {ref.value}%
-              </text>
-            </g>
+            <line
+              key={`line-${ref.id}`}
+              x1={padding.left}
+              y1={ref.lineY}
+              x2={chartRightX}
+              y2={ref.lineY}
+              stroke={isHover ? "#1f6b3a" : "#0c2a36"}
+              strokeOpacity={isHover ? 1 : 0.45}
+              strokeWidth={isHover ? 1.4 : 0.8}
+              strokeDasharray="6 4"
+              onMouseEnter={() => setHover(ref.id)}
+              onMouseLeave={() => setHover(null)}
+              style={{ cursor: "pointer" }}
+            />
           );
         })}
 
@@ -97,12 +116,57 @@ export default function HistoricalDebtChart({ rows }) {
           ) : null
         ))}
 
+        {/* reference labels in the right gutter, staggered + leader lines */}
+        {labels.map((ref) => {
+          const isHover = hover === ref.id;
+          return (
+            <g
+              key={`label-${ref.id}`}
+              onMouseEnter={() => setHover(ref.id)}
+              onMouseLeave={() => setHover(null)}
+              style={{ cursor: "pointer" }}
+            >
+              {/* leader from line endpoint to label baseline */}
+              <line
+                x1={chartRightX}
+                y1={ref.lineY}
+                x2={labelX - 6}
+                y2={ref.labelY - 4}
+                stroke={isHover ? "#1f6b3a" : "rgba(12,42,54,0.4)"}
+                strokeWidth="0.6"
+              />
+              {/* label background pill for legibility */}
+              <rect
+                x={labelX - 4}
+                y={ref.labelY - 12}
+                width={padding.right - 16}
+                height="16"
+                fill={isHover ? "#1f6b3a" : "rgba(234,240,226,0.95)"}
+                stroke={isHover ? "#1f6b3a" : "rgba(12,42,54,0.15)"}
+                strokeWidth="0.5"
+              />
+              <text
+                x={labelX}
+                y={ref.labelY - 1}
+                textAnchor="start"
+                fontFamily="JetBrains Mono, monospace"
+                fontSize="9.5"
+                letterSpacing="0.08em"
+                fill={isHover ? "#eaf0e2" : "#0c2a36"}
+                style={{ textTransform: "uppercase", fontWeight: 600 }}
+              >
+                {ref.value}% · {ref.label}
+              </text>
+            </g>
+          );
+        })}
+
         {/* peak callout */}
         {peak && (
           <g>
             <circle cx={xFor(peak.year)} cy={yFor(peak.debtToGdp)} r="6" fill="#0c2a36" stroke="#eaf0e2" strokeWidth="1.5" />
-            <line x1={xFor(peak.year)} y1={yFor(peak.debtToGdp) - 6} x2={xFor(peak.year)} y2={yFor(peak.debtToGdp) - 22} stroke="#0c2a36" strokeWidth="0.8" />
-            <text x={xFor(peak.year)} y={yFor(peak.debtToGdp) - 28} textAnchor="middle" fontFamily="Fraunces, serif" fontWeight="500" fontSize="13" fill="#0c2a36">
+            <line x1={xFor(peak.year)} y1={yFor(peak.debtToGdp) - 6} x2={peakX} y2={yFor(peak.debtToGdp) - 24} stroke="#0c2a36" strokeWidth="0.8" />
+            <text x={peakX} y={yFor(peak.debtToGdp) - 30} textAnchor={peakAnchor} fontFamily="Fraunces, serif" fontWeight="500" fontSize="14" fill="#0c2a36">
               Your peak · {Math.round(peak.debtToGdp)}% in {peak.year}
             </text>
           </g>
