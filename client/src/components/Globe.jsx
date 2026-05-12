@@ -16,7 +16,8 @@ export default function Globe({ regions, selectedRegionId, setSelectedRegionId, 
   const [rotationDeg, setRotationDeg] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const dragRef = useRef({ startX: 0, startRotation: 0 });
+  const dragRef = useRef({ startX: 0, startRotation: 0, armed: false });
+  const DRAG_THRESHOLD = 5; // px before we consider it a drag (so clicks pass through)
   const cx = 330;
   const cy = 255;
   const radius = 180;
@@ -28,20 +29,28 @@ export default function Globe({ regions, selectedRegionId, setSelectedRegionId, 
     return () => clearInterval(timer);
   }, [isPaused, isDragging]);
 
+  // Drag-to-spin without swallowing clicks on region dots.
+  // pointerDown only "arms" the drag; we wait for actual movement past
+  // DRAG_THRESHOLD before promoting to a real drag (and grabbing the pointer).
   function onPointerDown(e) {
-    setIsDragging(true);
-    dragRef.current = { startX: e.clientX, startRotation: rotationDeg };
-    e.currentTarget.setPointerCapture?.(e.pointerId);
+    dragRef.current = { startX: e.clientX, startRotation: rotationDeg, armed: true, pointerId: e.pointerId };
   }
   function onPointerMove(e) {
-    if (!isDragging) return;
+    if (!dragRef.current.armed) return;
     const dx = e.clientX - dragRef.current.startX;
-    // ~360deg per full-stage width (≈700px). Tuned for natural feel.
+    if (!isDragging) {
+      if (Math.abs(dx) < DRAG_THRESHOLD) return;
+      setIsDragging(true);
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+    }
     setRotationDeg(((dragRef.current.startRotation + dx * 0.5) % 360 + 360) % 360);
   }
   function onPointerUp(e) {
-    setIsDragging(false);
-    e.currentTarget?.releasePointerCapture?.(e.pointerId);
+    if (isDragging) {
+      e.currentTarget?.releasePointerCapture?.(e.pointerId);
+      setIsDragging(false);
+    }
+    dragRef.current.armed = false;
   }
 
   const projectedRegions = regions.map((region) => ({
