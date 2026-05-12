@@ -167,7 +167,7 @@ export const governmentSources = {
     metricKey: "activeWeatherAlerts",
     fetch: async () => {
       const response = await fetch(
-        "https://api.weather.gov/alerts/active?area=US&status=actual",
+        "https://api.weather.gov/alerts/active?status=actual&message_type=alert",
         {
           headers: {
             Accept: "application/geo+json",

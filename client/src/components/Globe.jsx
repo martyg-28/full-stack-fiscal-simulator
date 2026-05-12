@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   projectSpherePoint,
   buildProjectedLine,
@@ -15,16 +15,34 @@ const longitudeLines = [-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150, 180]
 export default function Globe({ regions, selectedRegionId, setSelectedRegionId, finalDeficit, score, fundingStress }) {
   const [rotationDeg, setRotationDeg] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef({ startX: 0, startRotation: 0 });
   const cx = 330;
   const cy = 255;
   const radius = 180;
   const budgetPoint = { x: 760, y: 255 };
 
   useEffect(() => {
-    if (isPaused) return undefined;
+    if (isPaused || isDragging) return undefined;
     const timer = setInterval(() => setRotationDeg((prev) => (prev + 0.55) % 360), 40);
     return () => clearInterval(timer);
-  }, [isPaused]);
+  }, [isPaused, isDragging]);
+
+  function onPointerDown(e) {
+    setIsDragging(true);
+    dragRef.current = { startX: e.clientX, startRotation: rotationDeg };
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  }
+  function onPointerMove(e) {
+    if (!isDragging) return;
+    const dx = e.clientX - dragRef.current.startX;
+    // ~360deg per full-stage width (≈700px). Tuned for natural feel.
+    setRotationDeg(((dragRef.current.startRotation + dx * 0.5) % 360 + 360) % 360);
+  }
+  function onPointerUp(e) {
+    setIsDragging(false);
+    e.currentTarget?.releasePointerCapture?.(e.pointerId);
+  }
 
   const projectedRegions = regions.map((region) => ({
     ...region,
@@ -36,32 +54,28 @@ export default function Globe({ regions, selectedRegionId, setSelectedRegionId, 
 
   return (
     <div className="globe-card">
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 20, alignItems: "start", marginBottom: 16, flexWrap: "wrap" }}>
-        <div>
-          <span className="badge">3D spherical transmission model</span>
-          <h2 className="panel-title" style={{ marginTop: 12 }}>World drivers of the U.S. budget</h2>
-          <p className="dark-muted">A rotating globe showing how global shocks transmit into deficit, debt, and funding pressure. Hover to pause.</p>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, minWidth: 330 }}>
-          <div className="score-card"><small>Balance</small><strong>{score.toFixed(0)}</strong></div>
-          <div className="score-card"><small>Deficit</small><strong>{fmtPct(finalDeficit)}</strong></div>
-          <div className="score-card"><small>Funding</small><strong>{fmtPct(fundingStress)}</strong></div>
-        </div>
-      </div>
-
       <div className="globe-layout">
-        <div className="globe-stage" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
+        <div
+          className="globe-stage"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          style={{ cursor: isDragging ? "grabbing" : "grab", touchAction: "none" }}
+        >
           <svg viewBox="0 0 1000 560">
             <defs>
               <radialGradient id="globeFill" cx="32%" cy="28%" r="70%">
-                <stop offset="0%" stopColor="#1e3a5f" />
-                <stop offset="52%" stopColor="#0f172a" />
-                <stop offset="100%" stopColor="#020617" />
+                <stop offset="0%" stopColor="#ebe1cd" />
+                <stop offset="52%" stopColor="#ddd1b8" />
+                <stop offset="100%" stopColor="#c8baa1" />
               </radialGradient>
               <clipPath id="globeClip"><circle cx={cx} cy={cy} r={radius} /></clipPath>
             </defs>
 
-            <rect width="1000" height="560" fill="#0f172a" />
+            <rect width="1000" height="560" fill="#ebe1cd" />
             {[...Array(36)].map((_, index) => (
               <circle key={index} cx={(index * 71) % 965 + 12} cy={(index * 137) % 520 + 14} r={index % 4 === 0 ? 1.4 : 0.7} fill="rgba(226,232,240,0.55)" />
             ))}
@@ -72,24 +86,24 @@ export default function Globe({ regions, selectedRegionId, setSelectedRegionId, 
             <g clipPath="url(#globeClip)">
               {latitudeLines.map((line, index) => {
                 const d = buildProjectedLine(line, rotationDeg, radius, cx, cy);
-                return d ? <path key={`lat-${index}`} d={d} fill="none" stroke="rgba(255,255,255,0.11)" /> : null;
+                return d ? <path key={`lat-${index}`} d={d} fill="none" stroke="rgba(28,26,23,0.12)" /> : null;
               })}
               {longitudeLines.map((line, index) => {
                 const d = buildProjectedLine(line, rotationDeg, radius, cx, cy);
-                return d ? <path key={`lon-${index}`} d={d} fill="none" stroke="rgba(255,255,255,0.075)" /> : null;
+                return d ? <path key={`lon-${index}`} d={d} fill="none" stroke="rgba(28,26,23,0.08)" /> : null;
               })}
               {continentPolygons.map((polygon, index) => {
                 const d = buildPolygonPath(polygon, rotationDeg, radius, cx, cy);
-                return d ? <path key={`continent-${index}`} d={d} fill="rgba(226,232,240,0.16)" stroke="rgba(255,255,255,0.13)" /> : null;
+                return d ? <path key={`continent-${index}`} d={d} fill="rgba(74,90,58,0.30)" stroke="rgba(74,90,58,0.7)" /> : null;
               })}
             </g>
 
-            <circle cx={cx} cy={cy} r={radius} fill="none" stroke="rgba(255,255,255,0.22)" />
+            <circle cx={cx} cy={cy} r={radius} fill="none" stroke="rgba(28,26,23,0.4)" />
 
-            <circle cx={budgetPoint.x} cy={budgetPoint.y} r="72" fill="rgba(56,189,248,0.10)" />
-            <circle cx={budgetPoint.x} cy={budgetPoint.y} r="48" fill="white" />
-            <text x={budgetPoint.x} y={budgetPoint.y - 6} textAnchor="middle" fontSize="16" fontWeight="900" fill="#0f172a">U.S. Budget</text>
-            <text x={budgetPoint.x} y={budgetPoint.y + 15} textAnchor="middle" fontSize="11" fontWeight="800" fill="#475569">impact node</text>
+            <circle cx={budgetPoint.x} cy={budgetPoint.y} r="60" fill="none" stroke="rgba(28,26,23,0.3)" strokeDasharray="2 4" />
+            <circle cx={budgetPoint.x} cy={budgetPoint.y} r="36" fill="#1c1a17" />
+            <text x={budgetPoint.x} y={budgetPoint.y - 2} textAnchor="middle" fontFamily="Fraunces, serif" fontSize="14" fontWeight="500" fill="#f4ede0">U.S.</text>
+            <text x={budgetPoint.x} y={budgetPoint.y + 14} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="9" letterSpacing="0.14em" fill="#f4ede0">BUDGET</text>
 
             {visible.map((region) => {
               const active = selected.id === region.id;
@@ -101,13 +115,11 @@ export default function Globe({ regions, selectedRegionId, setSelectedRegionId, 
                   key={`path-${region.id}`}
                   d={d}
                   fill="none"
-                  stroke={active ? "rgba(251,191,36,0.95)" : "rgba(125,211,252,0.68)"}
-                  strokeWidth={active ? 3.4 : 2}
-                  strokeDasharray="8 10"
+                  stroke={active ? "#b9572f" : "rgba(28,26,23,0.35)"}
+                  strokeWidth={active ? 1.8 : 0.9}
+                  strokeDasharray={active ? "0" : "5 6"}
                   strokeLinecap="round"
-                >
-                  <animate attributeName="stroke-dashoffset" from="0" to="-36" dur={active ? "1.1s" : "2.0s"} repeatCount="indefinite" />
-                </path>
+                />
               );
             })}
 
@@ -116,10 +128,10 @@ export default function Globe({ regions, selectedRegionId, setSelectedRegionId, 
               const { x, y, scale } = region.projected;
               return (
                 <g key={region.id} onClick={() => setSelectedRegionId(region.id)} style={{ cursor: "pointer" }}>
-                  <circle cx={x} cy={y} r={(16 + region.impact * 0.13) * scale} fill={active ? "rgba(251,191,36,0.18)" : "rgba(125,211,252,0.12)"} />
-                  <circle cx={x} cy={y} r={(active ? 10.5 : 8) * scale} fill={active ? "#fbbf24" : "#e2e8f0"} />
-                  <text x={x + 14} y={y - 8} fontSize="12" fontWeight="900" fill="white">{region.label}</text>
-                  <text x={x + 14} y={y + 8} fontSize="10" fill="rgba(226,232,240,0.78)">{region.short} · {region.impact}</text>
+                  <circle cx={x} cy={y} r={(12 + region.impact * 0.10) * scale} fill={active ? "rgba(185,87,47,0.16)" : "rgba(28,26,23,0.06)"} />
+                  <circle cx={x} cy={y} r={(active ? 8 : 6) * scale} fill={active ? "#b9572f" : "#1c1a17"} stroke="#f4ede0" strokeWidth="1.2" />
+                  <text x={x + 12} y={y - 7} fontFamily="JetBrains Mono, monospace" fontSize="9" letterSpacing="0.10em" fill="#1c1a17" style={{ textTransform: "uppercase" }}>{region.label}</text>
+                  <text x={x + 12} y={y + 7} fontFamily="Fraunces, serif" fontSize="11" fill="#4d4639">{region.short} · {region.impact}</text>
                 </g>
               );
             })}
@@ -127,26 +139,27 @@ export default function Globe({ regions, selectedRegionId, setSelectedRegionId, 
         </div>
 
         <div className="side-panel">
-          <p className="dark-muted" style={{ margin: 0 }}>Selected node</p>
-          <h2 style={{ marginTop: 4 }}>{selected.label}</h2>
-          <span className="badge">{selected.risk}</span>
-          <div className="grid2" style={{ marginTop: 18 }}>
-            <div className="score-card"><small>Impact</small><strong>{selected.impact}</strong></div>
-            <div className="score-card"><small>Budget drag</small><strong>{selected.budgetDrag}</strong></div>
-          </div>
-          <div style={{ marginTop: 18 }}>
+          <span className="eyebrow"><span className="pip"></span>Selected node</span>
+          <h2>{selected.label}</h2>
+          <span className="muted" style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}>{selected.risk} · Impact {selected.impact}</span>
+
+          <div className="dossier-mini">
             {Object.entries(selected.variables).map(([key, value]) => (
-              <div key={key} style={{ marginBottom: 12 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", color: "#cbd5e1", fontSize: 12, fontWeight: 900 }}>
-                  <span>{key.toUpperCase()}</span><span>{Math.round(value)}</span>
+              <div key={key} style={{ marginBottom: 10 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "JetBrains Mono, monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-soft)" }}>
+                  <span>{key}</span><span className="num">{Math.round(value)}</span>
                 </div>
-                <div style={{ height: 8, background: "rgba(255,255,255,.1)", borderRadius: 99, overflow: "hidden", marginTop: 4 }}>
-                  <div style={{ height: "100%", width: `${value}%`, background: "white" }} />
+                <div style={{ height: 4, background: "rgba(28,26,23,0.08)", marginTop: 4 }}>
+                  <div style={{ height: "100%", width: `${value}%`, background: "var(--accent-sienna)" }} />
                 </div>
               </div>
             ))}
           </div>
-          <p className="dark-muted">Channels: {selected.channels.join(", ")}</p>
+          <p className="muted" style={{ marginTop: 12, fontSize: 13 }}>Channels: {selected.channels.join(" · ")}</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12 }}>
+            <div className="score-card"><small>Budget drag</small><strong className="num">{selected.budgetDrag}</strong></div>
+            <div className="score-card"><small>Funding</small><strong className="num">{fmtPct(fundingStress)}</strong></div>
+          </div>
         </div>
       </div>
     </div>

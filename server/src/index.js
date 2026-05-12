@@ -3,6 +3,7 @@ import cors from "cors";
 import express from "express";
 import { governmentMetricsRouter } from "./routes/governmentMetrics.js";
 import { scenariosRouter } from "./routes/scenarios.js";
+import { mentorRouter } from "./routes/mentor.js";
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -16,6 +17,7 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api/government-metrics", governmentMetricsRouter);
 app.use("/api/scenarios", scenariosRouter);
+app.use("/api/mentor", mentorRouter);
 
 app.use((error, _req, res, _next) => {
   console.error(error);

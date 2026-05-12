@@ -16,16 +16,16 @@ export default function GovernmentPanel({ govData, manualStress, derivedStress }
 
   return (
     <div className="card">
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "start", flexWrap: "wrap" }}>
+      <div className="card-head">
         <div>
-          <p className="muted" style={{ margin: 0 }}>Real-world data layer</p>
-          <h2 className="panel-title">Server-side government API connectors</h2>
-          <p className="muted">
-            The React app calls your Express backend. The backend fans out to Treasury, BLS, and NOAA/NWS,
+          <span className="eyebrow"><span className="pip"></span>Live data sources</span>
+          <h2 className="panel-title">Government data, server-side</h2>
+          <p className="muted" style={{ maxWidth: 560 }}>
+            The frontend talks only to our API. The backend fans out to Treasury, BLS, and NOAA/NWS,
             caches each response in SQLite, and returns a normalized metric.
           </p>
         </div>
-        <button className="btn" onClick={govData.refresh}>Refresh feeds</button>
+        <button className="btn ghost" onClick={govData.refresh}>Refresh feeds</button>
       </div>
 
       <div className="api-grid">
