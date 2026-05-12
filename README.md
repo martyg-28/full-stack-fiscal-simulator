@@ -10,19 +10,26 @@ A classroom atlas for U.S. fiscal policy. Students build a policy package, expos
 
 ## Screenshots
 
-![Step 1 — Choose your role](<img width="1510" height="825" alt="Screenshot 2026-05-12 at 3 24 06 AM" src="https://github.com/user-attachments/assets/8a493fbb-0dd4-4f99-87cc-1e632e7c0b68" />)
-*Step 1. Stepper at the top, hero with the live sustainability score (29 · Strained), role-based scoring panel below.*
+![Step 1 — Choose your role](docs/step-1-role.png)
+*Step 1. Sticky stepper at the top, "Policy Palette" hero with the live sustainability score, role HUD + political-capital meter below.*
 
-![Step 1 with Atlas open](<img width="1510" height="832" alt="Screenshot 2026-05-12 at 3 24 51 AM" src="https://github.com/user-attachments/assets/93a40bcf-122a-4991-90c8-bbceae5963c5" />)
-
+![Step 1 with Atlas open](docs/step-1-atlas.png)
 *Atlas (live Claude) explaining the five roles in context — voice mode toggle in the header, suggested prompts tied to the current step.*
 
-![Step 2 — Read the brief](<img width="1507" height="827" alt="Screenshot 2026-05-12 at 3 25 18 AM" src="https://github.com/user-attachments/assets/aa487281-ca12-4ab7-adf8-0c96a01b9efd" />
-)
+![Step 2 — Read the brief](docs/step-2-brief.png)
 *Step 2. Live Treasury, BLS, and NOAA data feeding the model. The "Live-data stress adjustments" strip shows exactly how today's numbers shift each stress dial.*
 
-![Plate I — Transmission map](docs/plate-1-transmission.png)
-*Plate I. Hand-drawn equirectangular world map with arcs of pressure transmission into the U.S. budget anchor. Each region is clickable.*
+![Step 3 — Build your package](docs/step-3-build.png)
+*Step 3. CBO budget options and policy sliders. The 10-year deficit impact pill updates in real time as you toggle reforms.*
+
+![Step 4 — Stress-test the world](docs/step-4-world.png)
+*Step 4. Four cartographic plates — flat transmission map, rotating globe, U.S. domestic atlas, and historical reference chart.*
+
+![Step 5 — Read your results](docs/step-5-read.png)
+*Step 5. Dossier figures with qualitative bands, tradeoff radar, scenario story, and charts.*
+
+![Step 6 — Defend and save](docs/step-6-defend.png)
+*Step 6. Historical precedent timeline, save-scenario panel, and the "Done · take the quiz" capstone button.*
 
 ---
 
