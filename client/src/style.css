@@ -710,6 +710,103 @@ button, input, select { font: inherit; color: inherit; }
   border-bottom: 1px solid var(--rule);
 }
 
+/* ---------- Role HUD ---------- */
+.role-hud {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  padding: 0;
+}
+
+.role-hud-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1.2fr;
+}
+
+.role-hud-col {
+  padding: 18px 22px;
+  border-right: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.role-hud-col:last-child { border-right: 0; }
+
+.role-hud-col.score-col strong {
+  font-family: "Fraunces", serif;
+  font-weight: 500;
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--accent-forest);
+}
+
+.role-select {
+  margin-top: 2px;
+  padding: 6px 8px;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper);
+  font-family: "Fraunces", serif;
+  font-weight: 500;
+  font-size: 18px;
+}
+
+.capital-bar {
+  position: relative;
+  height: 10px;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  margin-top: 8px;
+}
+.capital-fill {
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  background: var(--accent-forest);
+  transition: width .15s ease;
+}
+.capital-fill.over { background: var(--accent-oxblood); }
+.capital-fill.over-tail { background: var(--accent-oxblood); }
+
+/* ---------- Scenario story ---------- */
+.story-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 14px;
+}
+.story-body {
+  background: var(--paper-2);
+  border-left: 3px solid var(--accent-forest);
+  padding: 16px 18px;
+}
+.story-tag {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-forest);
+  margin-bottom: 6px;
+}
+.story-text {
+  margin: 0 0 10px;
+  font-family: "Fraunces", serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.story-text:last-child { margin-bottom: 0; }
+
+/* ---------- Precedent timeline ---------- */
+.precedent-timeline {
+  margin-top: 12px;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  padding: 18px 14px;
+  overflow-x: auto;
+}
+.precedent-timeline svg { display: block; width: 100%; min-width: 800px; height: auto; }
+
 /* ---------- Map tooltip ---------- */
 .map-tooltip {
   position: absolute;

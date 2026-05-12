@@ -9,7 +9,7 @@ const STATUS_HELP = {
   "demo fallback": "Backend is unreachable. Showing a static demo value.",
 };
 
-export default function GovernmentPanel({ govData, manualStress, derivedStress }) {
+export default function GovernmentPanel({ govData, manualStress, derivedStress, onAskAtlas }) {
   const adjustments = Object.keys(derivedStress)
     .map((key) => ({ key, manual: manualStress[key], derived: derivedStress[key] }))
     .filter((item) => Math.round(item.manual) !== Math.round(item.derived));
@@ -38,6 +38,16 @@ export default function GovernmentPanel({ govData, manualStress, derivedStress }
             <span className={`status ${source.status}`} title={STATUS_HELP[source.status] || ""}>
               {source.status}
             </span>
+            {onAskAtlas && (
+              <button
+                type="button"
+                className="why-btn"
+                style={{ marginTop: 8 }}
+                onClick={() => onAskAtlas(`Explain how ${source.label} affects my fiscal model and which stress dial it pushes.`)}
+              >
+                Why does this matter?
+              </button>
+            )}
           </div>
         ))}
       </div>

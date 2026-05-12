@@ -26,6 +26,12 @@ import FlatTransmissionMap from "./components/FlatTransmissionMap.jsx";
 import USPressureMap from "./components/USPressureMap.jsx";
 import HistoricalDebtChart from "./components/HistoricalDebtChart.jsx";
 import Tutorial from "./components/Tutorial.jsx";
+import RoleHUD from "./components/RoleHUD.jsx";
+import TradeoffRadar from "./components/TradeoffRadar.jsx";
+import ScenarioStory from "./components/ScenarioStory.jsx";
+import PrecedentTimeline from "./components/PrecedentTimeline.jsx";
+import { ROLES, rolesById } from "./lib/roles.js";
+import { computeAxes } from "./lib/scoreAxes.js";
 
 const initialPolicy = scenarioPresets[0].policy;
 const initialStress = scenarioPresets[0].stress;
@@ -76,6 +82,7 @@ export default function App() {
   const [selectedOptionIds, setSelectedOptionIds] = useState([]);
   const [externalAsk, setExternalAsk] = useState(null);
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [selectedRoleId, setSelectedRoleId] = useState(ROLES[0].id);
 
   const govData = useGovernmentData();
   const derivedStress = useMemo(() => applyRealDataToStress(stress, govData.metrics), [stress, govData.metrics]);
@@ -98,11 +105,27 @@ export default function App() {
     JSON.stringify(p.policy) === JSON.stringify(policy) && JSON.stringify(p.stress) === JSON.stringify(stress)
   )?.label;
 
+  const selectedRole = rolesById[selectedRoleId] || ROLES[0];
+  const roleContext = {
+    policy,
+    derivedStress,
+    summary: {
+      sustainabilityScore: Number(score.toFixed(1)),
+      politicalViability: Number(probability.toFixed(1)),
+      fundingStress: Number(fundingStress.toFixed(1)),
+      debtToGdp2056: final.debtToGdp,
+      deficitToGdp2056: final.deficitToGdp,
+    },
+  };
+  const roleScore = selectedRole.score(roleContext);
+  const tradeoffAxes = computeAxes(roleContext);
+
   const atlasContext = {
     policy,
     manualStress: stress,
     derivedStress,
     selectedRegion: selectedRegion?.label,
+    selectedRole: selectedRole.label,
     scenarioPreset: presetLabel,
     summary: {
       sustainabilityScore: Number(score.toFixed(1)),
@@ -218,7 +241,28 @@ export default function App() {
           Studium is an exploratory classroom model · Not an official fiscal forecast
         </div>
 
-        <GovernmentPanel govData={govData} manualStress={stress} derivedStress={derivedStress} />
+        <RoleHUD
+          selectedRoleId={selectedRoleId}
+          setSelectedRoleId={setSelectedRoleId}
+          policy={policy}
+          roleScore={roleScore}
+          onAskAtlas={askAtlas}
+        />
+
+        <section className="grid2">
+          <div className="card">
+            <div className="card-head">
+              <div>
+                <span className="eyebrow"><span className="pip"></span>Tradeoff radar</span>
+                <h2 className="panel-title">Five axes, one shape</h2>
+              </div>
+            </div>
+            <TradeoffRadar axes={tradeoffAxes} onAskAtlas={askAtlas} />
+          </div>
+          <ScenarioStory context={{ ...atlasContext, summary: { ...atlasContext.summary, ...tradeoffAxes } }} />
+        </section>
+
+        <GovernmentPanel govData={govData} manualStress={stress} derivedStress={derivedStress} onAskAtlas={askAtlas} />
 
         {/* ---------- Cartography: two maps side by side ---------- */}
         <section className="maps-grid">
@@ -264,6 +308,8 @@ export default function App() {
             <div className="map-controls">Hover a reference line for the historical episode</div>
           </div>
         </section>
+
+        <PrecedentTimeline onAskAtlas={(q) => askAtlas(q, "historical-case")} />
 
         <section className="card">
           <div className="card-head">

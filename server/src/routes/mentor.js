@@ -1,11 +1,18 @@
 import express from "express";
 import { fallbackMentor } from "../mentor/fallback.js";
 import { askLlmMentor, isLlmConfigured } from "../mentor/llm.js";
+import { historicalPrecedents } from "../mentor/historicalPrecedents.js";
 
 export const mentorRouter = express.Router();
 
 mentorRouter.get("/status", (_req, res) => {
   res.json({ llm: isLlmConfigured() });
+});
+
+mentorRouter.get("/precedents", (_req, res) => {
+  res.json({
+    precedents: historicalPrecedents.map(({ keywords, ...rest }) => rest),
+  });
 });
 
 mentorRouter.post("/chat", async (req, res, next) => {
