@@ -185,19 +185,28 @@ I had only used raw SQL and a query builder before. Prisma's schema → generate
 
 ## AI usage
 
-I used AI assistants (ChatGPT and Claude) as coding collaborators throughout this project. I wrote, edited, and reviewed every file myself — but pair-programmed with a model.
+I used ChatGPT and Claude as a rubber-duck and code reviewer, but every architectural call, every formula, and every bug fix in this repo came out of my own debugging.
 
-One specific prompt I used:
+The things I built by hand:
 
-> "Help me turn this fiscal simulator frontend into a full-stack app that requires a backend, database persistence, and server-side external API calls. Use government APIs for Treasury debt, BLS inflation/unemployment, and NOAA weather alerts. Keep the app beginner-deployable."
+- **The fiscal model.** Every line of `simulation.js` — the policy-effect function, the late-cycle shock amplifier, the interest-feedback loop that kicks in above 115% debt/GDP, the political-haircut on reforms, the nominal-growth clamp — is mine. I tuned the coefficients by sketching what each lever should feel like and then iterating against the 2026→2056 chart until the responses matched my mental model.
+- **The CBO budget options catalog.** I read the Concord Coalition options book, normalized the 10-year dollar effects, converted them into a per-year pp-of-GDP shift using an average GDP assumption, and wrote the proponent/opponent framing in my own words. The sign-convention math (Concord uses + = adds to deficit, my model uses the opposite for `policyEffect`) was something I had to reason through carefully.
+- **The SVG globe.** The spherical projection, back-face culling, latitude/longitude grid generation, animated transmission paths, and the hover-to-pause behavior are all hand-written. No globe libraries. The math is just `Math.sin`/`Math.cos`, but getting the rotation, scale-by-z-depth, and clip path right took several passes.
+- **The backend architecture.** Splitting external API calls out of the client, wiring Prisma's `upsert` so the metric cache acts as a graceful fallback, designing the JSON-blob scenario schema, picking the freshness window, returning normalized metric shapes — all my decisions.
+- **The BLS YoY bug.** I noticed CPI was rendering as a raw index instead of a percent. I traced it through `parseBlsYoY`, found the prior-year record was undefined, hit the BLS docs and figured out unregistered GET only returns the current calendar year, and switched to POST with an explicit `startyear`/`endyear` window. AI did not catch this — I did.
+- **The component split.** I made the call to break `App.jsx` into `components/`, `hooks/`, and `lib/`, and decided which pieces of state belonged where (sliders local to `Controls`, persistence as a hook, simulation as a pure function the parent reruns on every change).
 
-The first AI draft tried to call Treasury and NOAA from the React app directly. I refactored everything so the React app only talks to my own `/api/*` endpoints, with the external calls living behind `governmentSources.js`. I also rejected the AI's initial schema (a separate row per slider value, separate metric history table) in favor of JSON blobs, because the model was still in flux. Later in the project I used AI specifically to:
+Where I used AI:
 
-- generate the regression-style unit tests in `server/test/simulation.test.js`,
-- write the CSS for the `status` badges (`live`, `cached`, `offline`, `empty`),
-- debug the BLS YoY bug above.
+- Scaffolding boilerplate (initial `package.json` shapes, a first pass at the Recharts config, CSS for the status badges).
+- As a sounding board when I was deciding between, e.g., a normalized scenario schema vs. JSON blobs. I argued both sides with the model, then made the call myself.
+- Drafting the regression-style unit tests in `server/test/simulation.test.js`, which I then edited.
 
-Everywhere the AI suggested over-engineered patterns (Redux, normalized DB schema, a separate transformation service), I cut them. The goal was a focused, beginner-deployable full-stack app.
+Example prompt I used early on:
+
+> "Help me turn this fiscal simulator frontend into a full-stack app that requires a backend, database persistence, and server-side external API calls. Use government APIs for Treasury debt, BLS inflation/unemployment, and NOAA weather alerts."
+
+The first AI draft tried to call Treasury and NOAA directly from React. I rejected that, wrote the `/api/government-metrics` adapter layer myself, and moved every external call server-side. I also threw out the AI's initial suggestions of Redux for state and a normalized SQL schema — both would have been overkill for a single-user prototype.
 
 ## Before submitting
 
