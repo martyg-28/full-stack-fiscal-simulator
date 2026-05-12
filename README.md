@@ -707,9 +707,28 @@ The AI's first sketch tried to call Treasury, BLS, and NOAA directly from React,
 
 ## Deployment
 
-- **Frontend.** Netlify, Vercel, or Render static site. `npm run build --prefix client` produces a Vite production bundle in `client/dist`.
-- **Backend.** Render or Railway web service. Set `DATABASE_URL`, `PORT`, optionally `ANTHROPIC_API_KEY`, `MENTOR_MODEL`, `BLS_API_KEY`. `npm start` runs `node src/index.js` from `server/`.
-- **Database.** SQLite is fine for the demo. For production, switch Prisma's `datasource db` provider to PostgreSQL and run `prisma migrate deploy` from a hosted migration step.
+The repo ships with a `render.yaml` blueprint so the whole stack — built React app + Express API + SQLite — runs as a single Render web service at one URL. Click path:
+
+1. Push to GitHub (already done).
+2. Go to [render.com](https://render.com/) and sign in with GitHub.
+3. **New +** → **Blueprint**.
+4. Pick the `full-stack-fiscal-simulator` repo. Render reads `render.yaml`, provisions the service, and starts the first deploy.
+5. (Optional) In the service's Environment tab, add `ANTHROPIC_API_KEY` to switch Atlas from the deterministic fallback to live Claude.
+6. The first deploy takes ~3 minutes. After it's green, you'll get a `https://studium-xxxx.onrender.com` URL — paste it at the top of this README.
+
+**What the deploy does:**
+- `npm run build` installs both workspaces and produces `client/dist/`.
+- `npm start` runs `prisma db push` to materialize the SQLite schema, then `node src/index.js`.
+- In production, Express serves `client/dist` for any non-`/api/*` route, so the React app and the API live at the same origin. No Vite proxy needed.
+
+**Notes on Render's free tier.** The instance sleeps after 15 minutes of inactivity, so the first hit after a long idle takes ~30 seconds to wake. Acceptable for a classroom demo, not for production. The SQLite file lives on the instance's ephemeral disk; saved scenarios persist across requests but reset when Render redeploys or migrates the instance.
+
+**Production-grade upgrade path:** switch Prisma's datasource from SQLite to PostgreSQL, point `DATABASE_URL` at a managed Postgres (Render's own offering, Neon, Supabase), and run `prisma migrate deploy` from the build step. The application code does not change.
+
+**Alternative hosts.**
+- *Railway* — same blueprint approach. `npm run build` / `npm start` work as-is.
+- *Fly.io* — works with a small `Dockerfile`; not included here, would be ~15 lines.
+- *Vercel + Render split* — Vercel for `client/`, Render for `server/`. Set `VITE_API_BASE` to the Render URL in the client and update `client/src/lib/api.js` to prepend it. The current single-origin setup is simpler.
 
 ## Future improvements
 
