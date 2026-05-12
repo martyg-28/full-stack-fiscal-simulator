@@ -5,8 +5,22 @@ A classroom atlas for U.S. fiscal policy. Students build a policy package, expos
 > Submitted as a DALI Lab **Choose-Your-Own-Adventure** full-stack challenge.
 
 **Deployed app:** [full-stack-fiscal-simulator.onrender.com](https://full-stack-fiscal-simulator.onrender.com/)
-**Demo video**: https://drive.google.com/file/d/10JUI-yaX0dOXrA5cjuwbjDLYAZ1Xdulf/view?usp=sharing
-**Screenshots:** :
+
+**Demo video:** [Google Drive](https://drive.google.com/file/d/10JUI-yaX0dOXrA5cjuwbjDLYAZ1Xdulf/view?usp=sharing)
+
+## Screenshots
+
+![Step 1 — Choose your role](docs/step-1-role.png)
+*Step 1. Stepper at the top, hero with the live sustainability score (29 · Strained), role-based scoring panel below.*
+
+![Step 1 with Atlas open](docs/step-1-atlas.png)
+*Atlas (live Claude) explaining the five roles in context — voice mode toggle in the header, suggested prompts tied to the current step.*
+
+![Step 2 — Read the brief](docs/step-2-brief.png)
+*Step 2. Live Treasury, BLS, and NOAA data feeding the model. The "Live-data stress adjustments" strip shows exactly how today's numbers shift each stress dial.*
+
+![Plate I — Transmission map](docs/plate-1-transmission.png)
+*Plate I. Hand-drawn equirectangular world map with arcs of pressure transmission into the U.S. budget anchor. Each region is clickable.*
 
 ---
 
