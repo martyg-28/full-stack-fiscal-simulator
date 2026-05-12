@@ -14,11 +14,11 @@ export default function HistoricalDebtChart({ rows }) {
   const [hover, setHover] = useState(null);
 
   const W = 1000;
-  const H = 380;
-  const padding = { left: 80, right: 180, top: 36, bottom: 52 };
+  const H = 540;
+  const padding = { left: 80, right: 240, top: 44, bottom: 60 };
   const yMin = 0;
   const yMax = 260;
-  const MIN_LABEL_GAP = 18;
+  const MIN_LABEL_GAP = 22;
 
   const xs = useMemo(() => {
     const startYear = rows[0]?.year ?? 2026;
@@ -137,10 +137,10 @@ export default function HistoricalDebtChart({ rows }) {
               />
               {/* label background pill for legibility */}
               <rect
-                x={labelX - 4}
-                y={ref.labelY - 12}
-                width={padding.right - 16}
-                height="16"
+                x={labelX - 6}
+                y={ref.labelY - 14}
+                width={padding.right - 18}
+                height="19"
                 fill={isHover ? "#1f6b3a" : "rgba(234,240,226,0.95)"}
                 stroke={isHover ? "#1f6b3a" : "rgba(12,42,54,0.15)"}
                 strokeWidth="0.5"
@@ -150,7 +150,7 @@ export default function HistoricalDebtChart({ rows }) {
                 y={ref.labelY - 1}
                 textAnchor="start"
                 fontFamily="JetBrains Mono, monospace"
-                fontSize="9.5"
+                fontSize="11"
                 letterSpacing="0.08em"
                 fill={isHover ? "#eaf0e2" : "#0c2a36"}
                 style={{ textTransform: "uppercase", fontWeight: 600 }}
