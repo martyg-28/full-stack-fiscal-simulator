@@ -33,19 +33,27 @@ import PrecedentTimeline from "./components/PrecedentTimeline.jsx";
 import { ROLES, rolesById } from "./lib/roles.js";
 import { computeAxes } from "./lib/scoreAxes.js";
 import { STEPS, stepsById, panelVisible } from "./lib/steps.js";
+import {
+  sustainabilityBand, debtBand, viabilityBand, fundingBand,
+} from "./lib/scoreLabels.js";
 import StepperBar from "./components/StepperBar.jsx";
 import ScenarioQuiz from "./components/ScenarioQuiz.jsx";
 
 const initialPolicy = scenarioPresets[0].policy;
 const initialStress = scenarioPresets[0].stress;
 
-function DossierEntry({ figure, label, value, detail, onWhy }) {
+function DossierEntry({ figure, label, value, detail, onWhy, band }) {
   return (
     <motion.div className="entry" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
       <span className="figure-no">{figure}</span>
       <span className="label">{label}</span>
       <span className="value num">{value}</span>
-      <span className="detail">{detail}</span>
+      {band && (
+        <span className={`band-tag tone-${band.tone}`} title={band.blurb}>
+          {band.label}
+        </span>
+      )}
+      <span className="detail">{band?.blurb || detail}</span>
       {onWhy && (
         <button type="button" className="why-btn" onClick={onWhy} title="Ask Atlas">
           Why?
@@ -224,7 +232,10 @@ export default function App() {
           <div className="balance-card">
             <small>Sustainability score</small>
             <strong className="num">{score.toFixed(0)}</strong>
-            <span className="balance-tag">Index, 0–100 · higher is more sustainable</span>
+            {(() => { const b = sustainabilityBand(score); return (
+              <span className={`band-tag tone-${b.tone}`} style={{ marginTop: 4 }}>{b.label}</span>
+            ); })()}
+            <span className="balance-tag">{sustainabilityBand(score).blurb}</span>
           </div>
         </section>
         )}
@@ -237,6 +248,7 @@ export default function App() {
             figure="fig. 01"
             label="Debt / GDP — 2036"
             value={fmtPct(tenYear?.debtToGdp || 0)}
+            band={debtBand(tenYear?.debtToGdp || 0)}
             detail="Ten-year fiscal checkpoint."
             onWhy={() => askAtlas("Why did debt-to-GDP land where it did at 2036?")}
           />
@@ -244,6 +256,7 @@ export default function App() {
             figure="fig. 02"
             label="Debt / GDP — 2056"
             value={fmtPct(final.debtToGdp)}
+            band={debtBand(final.debtToGdp)}
             detail="Long-run debt trajectory."
             onWhy={() => askAtlas("Why is long-run debt at this level?")}
           />
@@ -251,6 +264,7 @@ export default function App() {
             figure="fig. 03"
             label="Political viability"
             value={fmtPct(probability)}
+            band={viabilityBand(probability)}
             detail="How politically realistic is this package."
             onWhy={() => askAtlas("Why is this hard to pass politically?")}
           />
@@ -258,6 +272,7 @@ export default function App() {
             figure="fig. 04"
             label="Borrowing pressure"
             value={fmtPct(fundingStress)}
+            band={fundingBand(fundingStress)}
             detail="Treasury funding stress index."
             onWhy={() => askAtlas("Explain borrowing pressure in this run.")}
           />

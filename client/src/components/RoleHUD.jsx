@@ -1,6 +1,7 @@
 import React from "react";
 import { ROLES } from "../lib/roles.js";
 import { computePoliticalCapital, POLITICAL_CAPITAL_BUDGET } from "../lib/scoreAxes.js";
+import { roleScoreBand } from "../lib/scoreLabels.js";
 
 export default function RoleHUD({ selectedRoleId, setSelectedRoleId, policy, roleScore, onAskAtlas }) {
   const role = ROLES.find((r) => r.id === selectedRoleId) || ROLES[0];
@@ -27,8 +28,11 @@ export default function RoleHUD({ selectedRoleId, setSelectedRoleId, policy, rol
         <div className="role-hud-col score-col">
           <span className="eyebrow">Role score</span>
           <strong className="num">{roleScore}</strong>
+          {(() => { const b = roleScoreBand(roleScore); return (
+            <span className={`band-tag tone-${b.tone}`}>{b.label}</span>
+          ); })()}
           <span className="muted" style={{ fontSize: 12 }}>
-            Same model. Different objective. {role.label}s judge debt, defense, support, climate, and viability differently.
+            {roleScoreBand(roleScore).blurb} A {role.label} judges this package on its own terms.
           </span>
           <button type="button" className="why-btn" onClick={() => onAskAtlas?.(`I'm playing the ${role.label} role. My role score is ${roleScore}. What should I change?`)}>
             Why this score?
