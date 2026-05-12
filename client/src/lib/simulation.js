@@ -131,12 +131,15 @@ export function fundingStressScore(rows, stress) {
 }
 
 export function balanceScore(rows, probability, fundingStress) {
+  // Banded so a default run lands ~25-35 (not 0), and strong reform packages
+  // can climb past 70. Penalties only kick in past a threshold so small
+  // student tweaks register as score movement immediately.
   const last = rows[rows.length - 1];
-  return clamp(
-    100 - (last.debtToGdp - 80) * 0.38 - last.deficitToGdp * 4 + probability * 0.15 - fundingStress * 0.15,
-    0,
-    100
-  );
+  const debtPenalty     = Math.max(0, last.debtToGdp - 100) * 0.30;
+  const deficitPenalty  = Math.max(0, last.deficitToGdp - 3) * 3;
+  const viabilityBonus  = probability * 0.20;
+  const fundingPenalty  = Math.max(0, fundingStress - 40) * 0.20;
+  return clamp(100 - debtPenalty - deficitPenalty + viabilityBonus - fundingPenalty, 0, 100);
 }
 
 export function applyRealDataToStress(manualStress, metrics = {}) {
