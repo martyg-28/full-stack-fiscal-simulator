@@ -10,6 +10,7 @@ import {
 } from "./lib/simulation.js";
 import { buildRegionalData } from "./lib/regions.js";
 import { scenarioPresets } from "./lib/presets.js";
+import { optionsDeficitDeltaPctGdp, selectedTenYearTotalBillions } from "./lib/policyOptions.js";
 import { useGovernmentData } from "./hooks/useGovernmentData.js";
 import { useScenarioPersistence } from "./hooks/useScenarioPersistence.js";
 import Globe from "./components/Globe.jsx";
@@ -17,6 +18,7 @@ import GovernmentPanel from "./components/GovernmentPanel.jsx";
 import Controls from "./components/Controls.jsx";
 import Charts from "./components/Charts.jsx";
 import PersistencePanel from "./components/PersistencePanel.jsx";
+import PolicyOptionsPanel from "./components/PolicyOptionsPanel.jsx";
 
 const initialPolicy = scenarioPresets[0].policy;
 const initialStress = scenarioPresets[0].stress;
@@ -35,10 +37,15 @@ export default function App() {
   const [policy, setPolicy] = useState(initialPolicy);
   const [stress, setStress] = useState(initialStress);
   const [selectedRegionId, setSelectedRegionId] = useState("middle-east");
+  const [selectedOptionIds, setSelectedOptionIds] = useState([]);
 
   const govData = useGovernmentData();
   const derivedStress = useMemo(() => applyRealDataToStress(stress, govData.metrics), [stress, govData.metrics]);
-  const rows = useMemo(() => runProjection(policy, derivedStress), [policy, derivedStress]);
+  const optionsDelta = useMemo(() => optionsDeficitDeltaPctGdp(selectedOptionIds), [selectedOptionIds]);
+  const rows = useMemo(
+    () => runProjection(policy, derivedStress, optionsDelta),
+    [policy, derivedStress, optionsDelta]
+  );
   const final = rows[rows.length - 1];
   const tenYear = rows.find((row) => row.year === 2036);
   const probability = passageProbability(policy, derivedStress);
@@ -47,6 +54,8 @@ export default function App() {
   const regions = useMemo(() => buildRegionalData(policy, derivedStress), [policy, derivedStress]);
   const highestRiskRegion = [...regions].sort((a, b) => b.impact - a.impact)[0];
 
+  const optionsTenYear = selectedTenYearTotalBillions(selectedOptionIds);
+
   const snapshot = {
     name: "Budget pressure scenario",
     policy,
@@ -54,6 +63,7 @@ export default function App() {
     derivedStress,
     liveData: { status: govData.status, metrics: govData.metrics },
     regions,
+    selectedOptions: selectedOptionIds,
     summary: {
       fiscalBalanceScore: Number(score.toFixed(1)),
       passageProbability: Number(probability.toFixed(1)),
@@ -62,6 +72,8 @@ export default function App() {
       deficitToGdp2056: final.deficitToGdp,
       fundingStress: Number(fundingStress.toFixed(1)),
       highestRiskRegion: highestRiskRegion?.label,
+      optionsTenYearBillions: optionsTenYear,
+      optionsDeltaPctGdp: Number(optionsDelta.toFixed(2)),
     },
   };
 
@@ -93,6 +105,11 @@ export default function App() {
         </section>
 
         <GovernmentPanel govData={govData} manualStress={stress} derivedStress={derivedStress} />
+        <PolicyOptionsPanel
+          selectedOptionIds={selectedOptionIds}
+          setSelectedOptionIds={setSelectedOptionIds}
+          deltaPctGdp={optionsDelta}
+        />
         <PersistencePanel persistence={persistence} />
         <Globe regions={regions} selectedRegionId={selectedRegionId} setSelectedRegionId={setSelectedRegionId} finalDeficit={final.deficitToGdp} score={score} fundingStress={fundingStress} />
         <Controls policy={policy} stress={stress} setPolicy={setPolicy} setStress={setStress} />

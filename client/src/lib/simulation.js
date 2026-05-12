@@ -73,7 +73,7 @@ function baselineDeficitToGdp(year) {
   return baseline.deficitToGdp2036 + (year - 2036) * 0.09;
 }
 
-export function runProjection(policy, stress) {
+export function runProjection(policy, stress, optionsDeltaPctGdp = 0) {
   const rows = [];
   let gdp = baseline.gdp2026;
   let debt = baseline.gdp2026 * (baseline.debtToGdp2026 / 100);
@@ -83,8 +83,9 @@ export function runProjection(policy, stress) {
     const shockEffect = macroShockEffect(stress, year);
     const debtRatioBefore = (debt / gdp) * 100;
     const interestFeedback = debtRatioBefore > 115 ? (debtRatioBefore - 115) * 0.018 : 0;
+    // optionsDeltaPctGdp uses Concord sign convention: + adds to deficit.
     const deficitToGdp = clamp(
-      baselineDeficitToGdp(year) - policyEffect + shockEffect + interestFeedback,
+      baselineDeficitToGdp(year) - policyEffect + shockEffect + interestFeedback + optionsDeltaPctGdp,
       1.2,
       15
     );
