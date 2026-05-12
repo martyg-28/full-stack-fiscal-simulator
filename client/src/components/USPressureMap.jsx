@@ -1,40 +1,57 @@
 import React, { useMemo, useState } from "react";
 
-// Hand-simplified U.S. silhouette in a 1000x520 canvas. Not cartographically
-// precise — just recognizable enough to anchor the editorial style.
+// Hand-simplified U.S. silhouette in a 1000x560 canvas. Goal is recognizability,
+// not precision: Pacific Northwest indent, California bend, Texas bulge, Gulf
+// coast, Florida peninsula, Carolinas, Maine corner, Great Lakes notch.
 const US_OUTLINE = `
-M 90 240 L 130 180 L 200 140 L 280 130 L 350 110 L 420 100 L 500 95
-L 580 100 L 660 110 L 720 130 L 760 160 L 800 200
-L 830 230 L 850 270 L 870 310 L 880 350 L 870 380 L 850 400
-L 820 420 L 770 430 L 720 425 L 680 440 L 640 460 L 600 470 L 560 465
-L 520 470 L 480 480 L 440 470 L 400 460 L 360 440 L 320 430 L 280 420
-L 240 410 L 200 390 L 170 360 L 140 320 L 110 280 L 90 240 Z
+M 145 145
+L 175 140 L 220 135 L 280 130 L 340 130 L 400 132 L 460 134
+L 500 165
+L 540 132 L 600 138 L 650 152 L 680 142 L 720 148 L 760 150
+L 800 158 L 830 168
+L 840 200 L 845 230 L 840 255
+L 830 275 L 810 290 L 790 305 L 775 325 L 770 348 L 770 365
+L 770 380
+L 760 388 L 740 388
+L 720 380 L 685 380 L 640 382 L 590 384 L 540 385 L 490 385
+L 440 380 L 405 378
+L 395 410 L 410 440 L 395 450 L 370 440 L 360 405
+L 340 380
+L 295 372 L 250 365 L 215 358
+L 195 345 L 175 325
+L 155 300 L 150 270 L 145 240 L 145 210 L 145 180
+Z
 `;
 
-// Florida tongue
-const US_FLORIDA = `M 720 420 L 740 440 L 760 470 L 770 490 L 760 500 L 745 490 L 730 470 L 720 440 Z`;
+// Florida peninsula — a clearer tail off the Gulf coast.
+const US_FLORIDA = `
+M 690 380
+L 700 410 L 710 445 L 716 475 L 712 495 L 700 498
+L 692 478 L 686 445 L 682 420 L 680 395
+Z
+`;
 
-// Census-region anchors (approximate, in canvas coords aligned to silhouette).
+// Census-region anchors over the new silhouette.
 const REGIONS = [
-  { id: "northeast", label: "Northeast", x: 800, y: 220,
+  { id: "northeast", label: "Northeast", x: 770, y: 195,
     blurb: "Financial center · Treasury bond market · alliance commitments anchor here.",
     pickStress: (s) => Math.round((s.politicalPolarization + s.fundingPressure) / 2) },
-  { id: "south",     label: "South",     x: 670, y: 380,
+  { id: "south",     label: "South",     x: 600, y: 340,
     blurb: "Defense industry · disaster-prone coastline · large healthcare share.",
     pickStress: (s) => Math.round((s.disasterShock + s.conflictShock) / 2) },
-  { id: "midwest",   label: "Midwest",   x: 530, y: 260,
+  { id: "midwest",   label: "Midwest",   x: 530, y: 220,
     blurb: "Manufacturing · industrial policy heartland · trade-disruption exposure.",
     pickStress: (s) => Math.round((s.tradeDisruption + s.publicSupport * 0.4 + 30) / 2) },
-  { id: "mountain",  label: "Mountain West", x: 350, y: 280,
+  { id: "mountain",  label: "Mountain West", x: 340, y: 245,
     blurb: "Federal land · resource extraction · climate adaptation costs.",
     pickStress: (s) => Math.round((s.disasterShock + 30) / 2) },
-  { id: "pacific",   label: "Pacific",   x: 175, y: 240,
+  { id: "pacific",   label: "Pacific",   x: 200, y: 240,
     blurb: "Tech, trade with East Asia · climate insurance pressure.",
     pickStress: (s) => Math.round((s.tradeDisruption + s.disasterShock) / 2) },
 ];
 
-// DC anchor (Treasury / Congress / Fed)
-const DC = { x: 800, y: 280 };
+// DC anchor (Treasury / Congress / Fed) — east coast at the Chesapeake.
+const DC = { x: 765, y: 248 };
 
 export default function USPressureMap({ govData, derivedStress }) {
   const [hover, setHover] = useState(null);
