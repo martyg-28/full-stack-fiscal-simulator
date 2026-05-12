@@ -138,28 +138,16 @@ export default function Globe({ regions, selectedRegionId, setSelectedRegionId, 
           </svg>
         </div>
 
-        <div className="side-panel">
-          <span className="eyebrow"><span className="pip"></span>Selected node</span>
-          <h2>{selected.label}</h2>
-          <span className="muted" style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}>{selected.risk} · Impact {selected.impact}</span>
-
-          <div className="dossier-mini">
-            {Object.entries(selected.variables).map(([key, value]) => (
-              <div key={key} style={{ marginBottom: 10 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "JetBrains Mono, monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ink-soft)" }}>
-                  <span>{key}</span><span className="num">{Math.round(value)}</span>
-                </div>
-                <div style={{ height: 4, background: "rgba(28,26,23,0.08)", marginTop: 4 }}>
-                  <div style={{ height: "100%", width: `${value}%`, background: "var(--accent-sienna)" }} />
-                </div>
-              </div>
-            ))}
+        <div className="globe-strip">
+          <div className="globe-strip-row">
+            <span className="eyebrow"><span className="pip"></span>Selected · {selected.label}</span>
+            <span className="muted" style={{ fontSize: 12 }}>
+              {selected.risk} · Impact {selected.impact} · Budget drag {selected.budgetDrag}
+            </span>
           </div>
-          <p className="muted" style={{ marginTop: 12, fontSize: 13 }}>Channels: {selected.channels.join(" · ")}</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12 }}>
-            <div className="score-card"><small>Budget drag</small><strong className="num">{selected.budgetDrag}</strong></div>
-            <div className="score-card"><small>Funding</small><strong className="num">{fmtPct(fundingStress)}</strong></div>
-          </div>
+          <p className="muted" style={{ margin: "4px 0 0", fontSize: 12 }}>
+            Channels: {selected.channels.join(" · ")}
+          </p>
         </div>
       </div>
     </div>

@@ -444,9 +444,20 @@ button, input, select { font: inherit; color: inherit; }
 
 .globe-card { padding: 0; border: 0; background: transparent; }
 .globe-card .card-head { padding: 22px 24px 0; }
-.globe-layout { display: grid; grid-template-columns: 1.6fr 0.9fr; gap: 0; border: 1px solid var(--rule); }
-.globe-layout > .globe-stage { border-right: 1px solid var(--rule); background: var(--paper-2); }
-.globe-layout > .side-panel  { padding: 22px 24px; }
+.globe-layout { display: grid; grid-template-columns: 1fr; gap: 0; border: 1px solid var(--rule); }
+.globe-layout > .globe-stage { border-bottom: 1px solid var(--rule); background: var(--paper-2); }
+
+.globe-strip {
+  padding: 12px 16px;
+  background: var(--paper);
+}
+.globe-strip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 .globe-stage svg { background: var(--paper-2); }
 
 .side-panel .dossier-mini { border-top: 1px solid var(--rule); margin-top: 14px; padding-top: 12px; }
