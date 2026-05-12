@@ -218,8 +218,23 @@ export default function App() {
               <button className="btn" onClick={() => setTutorialOpen(true)}>
                 Take the tour
               </button>
-              <button className="btn ghost" onClick={() => document.querySelector('.options-head')?.scrollIntoView({ behavior: "smooth" })}>
-                Begin simulation
+              <button
+                className="btn ghost"
+                onClick={() => {
+                  setCurrentStepId("build");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              >
+                Begin simulation →
+              </button>
+              <button
+                className="btn ghost"
+                onClick={() => {
+                  setCurrentStepId("defend");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              >
+                Load class scenario
               </button>
               <button className="btn ghost" onClick={() => askAtlas("Give me a 30-minute teacher activity outline for this simulation.", "professor-prompt")}>
                 Teacher guide
