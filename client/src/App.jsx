@@ -34,6 +34,7 @@ import { ROLES, rolesById } from "./lib/roles.js";
 import { computeAxes } from "./lib/scoreAxes.js";
 import { STEPS, stepsById, panelVisible } from "./lib/steps.js";
 import StepperBar from "./components/StepperBar.jsx";
+import ScenarioQuiz from "./components/ScenarioQuiz.jsx";
 
 const initialPolicy = scenarioPresets[0].policy;
 const initialStress = scenarioPresets[0].stress;
@@ -87,6 +88,7 @@ export default function App() {
   const [selectedRoleId, setSelectedRoleId] = useState(ROLES[0].id);
   const [currentStepId, setCurrentStepId] = useState(STEPS[0].id);
   const [advancedView, setAdvancedView] = useState(false);
+  const [quizOpen, setQuizOpen] = useState(false);
   const stepIdx = STEPS.findIndex((s) => s.id === currentStepId);
   const goNext = () => { const next = STEPS[Math.min(stepIdx + 1, STEPS.length - 1)]; setCurrentStepId(next.id); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const goBack = () => { const prev = STEPS[Math.max(stepIdx - 1, 0)]; setCurrentStepId(prev.id); window.scrollTo({ top: 0, behavior: "smooth" }); };
@@ -189,6 +191,7 @@ export default function App() {
           onSelect={setCurrentStepId}
           onNext={goNext}
           onBack={goBack}
+          onDone={() => setQuizOpen(true)}
           advancedView={advancedView}
           setAdvancedView={setAdvancedView}
         />
@@ -403,6 +406,7 @@ export default function App() {
 
       <AtlasMentor context={atlasContext} externalAsk={externalAsk} />
       <Tutorial forceOpen={tutorialOpen} onClose={() => setTutorialOpen(false)} />
+      <ScenarioQuiz open={quizOpen} context={atlasContext} onClose={() => setQuizOpen(false)} />
     </main>
   );
 }

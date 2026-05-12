@@ -1,7 +1,7 @@
 import React from "react";
 import { STEPS } from "../lib/steps.js";
 
-export default function StepperBar({ currentStepId, onSelect, onNext, onBack, advancedView, setAdvancedView }) {
+export default function StepperBar({ currentStepId, onSelect, onNext, onBack, onDone, advancedView, setAdvancedView }) {
   const currentIdx = STEPS.findIndex((s) => s.id === currentStepId);
   const step = STEPS[currentIdx] || STEPS[0];
 
@@ -67,14 +67,15 @@ export default function StepperBar({ currentStepId, onSelect, onNext, onBack, ad
               >
                 Back
               </button>
-              <button
-                type="button"
-                className="btn"
-                onClick={onNext}
-                disabled={currentIdx >= STEPS.length - 1}
-              >
-                {currentIdx >= STEPS.length - 1 ? "Done" : "Next →"}
-              </button>
+              {currentIdx >= STEPS.length - 1 ? (
+                <button type="button" className="btn" onClick={onDone}>
+                  Done · take the quiz
+                </button>
+              ) : (
+                <button type="button" className="btn" onClick={onNext}>
+                  Next →
+                </button>
+              )}
             </>
           )}
         </div>
