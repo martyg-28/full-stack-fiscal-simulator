@@ -4,7 +4,7 @@ A classroom atlas for U.S. fiscal policy. Students build a policy package, expos
 
 > Submitted as a DALI Lab **Choose-Your-Own-Adventure** full-stack challenge.
 
-**Deployed app:** [policypalette.com](https://policypalette.com)
+**Deployed app:** [full-stack-fiscal-simulator.onrender.com](https://full-stack-fiscal-simulator.onrender.com/)
 **Demo video / GIF:** _add link here_
 **Screenshots:** _add `docs/dashboard.png`, `docs/maps.png`, `docs/atlas.png` before submitting_
 
