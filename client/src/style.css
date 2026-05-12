@@ -1142,7 +1142,60 @@ button, input, select { font: inherit; color: inherit; }
   color: var(--ink-mute);
 }
 
-/* ---------- Tutorial overlay ---------- */
+/* ---------- Active walkthrough (non-blocking dock) ---------- */
+.walkthrough-dock {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 100;
+  width: min(420px, calc(100vw - 48px));
+}
+
+.walkthrough-card {
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--accent-forest);
+  padding: 20px 22px 18px;
+}
+
+.walkthrough-step-counter {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-forest);
+  margin-bottom: 8px;
+}
+
+.walkthrough-title {
+  font-family: "Fraunces", serif;
+  font-weight: 500;
+  font-size: 22px;
+  letter-spacing: -0.015em;
+  margin: 0 0 8px;
+}
+
+.walkthrough-body {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+.walkthrough-progress {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.walkthrough-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---------- Tutorial overlay (legacy modal style — still used as fallback) ---------- */
 .tutorial-overlay {
   position: fixed;
   inset: 0;

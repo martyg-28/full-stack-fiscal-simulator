@@ -435,7 +435,16 @@ export default function App() {
       </div>
 
       <AtlasMentor context={atlasContext} externalAsk={externalAsk} />
-      <Tutorial forceOpen={tutorialOpen} onClose={() => setTutorialOpen(false)} />
+      <Tutorial
+        forceOpen={tutorialOpen}
+        onClose={() => setTutorialOpen(false)}
+        setCurrentStepId={setCurrentStepId}
+        setSelectedRoleId={setSelectedRoleId}
+        setPolicy={setPolicy}
+        setSelectedOptionIds={setSelectedOptionIds}
+        setSelectedRegionId={setSelectedRegionId}
+        initialPolicy={initialPolicy}
+      />
       <ScenarioQuiz open={quizOpen} context={atlasContext} onClose={() => setQuizOpen(false)} />
     </main>
   );
