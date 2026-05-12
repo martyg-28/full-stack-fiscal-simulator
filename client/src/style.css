@@ -517,17 +517,55 @@ button, input, select { font: inherit; color: inherit; }
   border: 1px solid var(--ink);
 }
 
-.slider-row { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
-.slider label {
+.slider-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 6px;
+}
+.slider-label {
   font-family: "JetBrains Mono", monospace;
-  font-size: 11px;
-  letter-spacing: 0.12em;
+  font-size: 10px;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
+  color: var(--ink-mute);
   font-weight: 500;
 }
-.slider small { display: block; color: var(--ink-soft); margin-top: 4px; line-height: 1.45; font-size: 12px; }
-.slider strong { font-family: "Fraunces", serif; font-weight: 500; font-size: 20px; letter-spacing: -0.01em; }
-.slider input { width: 100%; margin-top: 12px; accent-color: var(--accent-sienna); }
+.slider-value-tag {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--ink-mute);
+}
+.slider-tier { display: grid; gap: 2px; margin-bottom: 8px; }
+.tier-name {
+  font-family: "Fraunces", serif;
+  font-weight: 500;
+  font-size: 19px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  line-height: 1.1;
+}
+.tier-blurb {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.tier-pips {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  margin: 4px 0 2px;
+}
+.tier-pip {
+  height: 4px;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+}
+.tier-pip.on {
+  background: var(--accent-forest);
+  border-color: var(--accent-forest);
+}
+.slider input { width: 100%; margin-top: 8px; accent-color: var(--accent-forest); }
 .slider .ask-atlas-link {
   display: inline-block; margin-top: 8px;
   background: transparent; border: 0; padding: 0 0 1px;

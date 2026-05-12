@@ -1,17 +1,32 @@
 import React from "react";
 import { scenarioPresets } from "../lib/presets.js";
+import { POLICY_TIERS, STRESS_TIERS, getTier } from "../lib/sliderTiers.js";
 
-function Slider({ label, value, help, onChange, swatch, onAskAtlas }) {
+function Slider({ label, value, onChange, swatch, onAskAtlas, fieldKey, tierTable }) {
+  const tier = getTier(fieldKey, value, tierTable);
   return (
     <div className="slider swatch" style={swatch ? { "--swatch": swatch } : undefined}>
-      <div className="slider-row">
-        <div>
-          <label>{label}</label>
-          <small>{help}</small>
-        </div>
-        <strong>{value}</strong>
+      <div className="slider-head">
+        <span className="slider-label">{label}</span>
+        <span className="slider-value-tag">{value}</span>
       </div>
-      <input type="range" min="0" max="100" value={value} onChange={(e) => onChange(Number(e.target.value))} />
+      <div className="slider-tier">
+        <strong className="tier-name">{tier.label}</strong>
+        <p className="tier-blurb">{tier.blurb}</p>
+      </div>
+      <div className="tier-pips" aria-hidden="true">
+        {Array.from({ length: tier.total }).map((_, i) => (
+          <span key={i} className={`tier-pip ${i <= tier.index ? "on" : ""}`} />
+        ))}
+      </div>
+      <input
+        type="range"
+        min="0"
+        max="100"
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        aria-label={`${label}: ${tier.label}`}
+      />
       {onAskAtlas && (
         <button type="button" className="ask-atlas-link" onClick={() => onAskAtlas(label)}>
           Ask Atlas →
@@ -30,6 +45,27 @@ const POLICY_SWATCHES = {
   climateResilience: "var(--pastel-mint)",
   industrialPolicy: "var(--pastel-peach)",
 };
+
+const POLICY_FIELDS = [
+  { key: "revenueReform",        label: "Revenue reform" },
+  { key: "discretionaryCuts",    label: "Discretionary cuts" },
+  { key: "healthcareEfficiency", label: "Healthcare efficiency" },
+  { key: "socialSecurityReform", label: "Social Security reform" },
+  { key: "defensePosture",       label: "Defense posture" },
+  { key: "climateResilience",    label: "Climate resilience" },
+  { key: "industrialPolicy",     label: "Industrial policy" },
+];
+
+const STRESS_FIELDS = [
+  { key: "politicalPolarization", label: "Political polarization" },
+  { key: "pacPressure",           label: "PAC pressure" },
+  { key: "publicSupport",         label: "Public support" },
+  { key: "congressionalMargin",   label: "Congress margin" },
+  { key: "fundingPressure",       label: "Funding pressure" },
+  { key: "conflictShock",         label: "Conflict shock" },
+  { key: "disasterShock",         label: "Disaster shock" },
+  { key: "tradeDisruption",       label: "Trade disruption" },
+];
 
 export default function Controls({ policy, stress, setPolicy, setStress, onAskAtlas }) {
   const setPolicyField = (field) => (value) => setPolicy((prev) => ({ ...prev, [field]: value }));
@@ -62,31 +98,38 @@ export default function Controls({ policy, stress, setPolicy, setStress, onAskAt
 
       <div className="grid2">
         <div className="card">
-          <h2 className="panel-title">Policy Builder</h2>
-          <p className="muted">Each lever is a policy paint swatch. Drag, watch the trajectory respond.</p>
+          <h2 className="panel-title">Policy builder</h2>
+          <p className="muted">Each lever is named for what it actually means. Drag to change the level.</p>
           <div className="slider-grid">
-            <Slider label="Revenue reform" value={policy.revenueReform} onChange={setPolicyField("revenueReform")} help="Broaden the tax base and adjust rates. Tradeoff: revenue gain vs. political resistance." swatch={POLICY_SWATCHES.revenueReform} onAskAtlas={onAskAtlas} />
-            <Slider label="Discretionary cuts" value={policy.discretionaryCuts} onChange={setPolicyField("discretionaryCuts")} help="Annual appropriations and agency budgets." swatch={POLICY_SWATCHES.discretionaryCuts} onAskAtlas={onAskAtlas} />
-            <Slider label="Healthcare efficiency" value={policy.healthcareEfficiency} onChange={setPolicyField("healthcareEfficiency")} help="Medicare payment and care reforms. Strong long-run lever." swatch={POLICY_SWATCHES.healthcareEfficiency} onAskAtlas={onAskAtlas} />
-            <Slider label="Social Security reform" value={policy.socialSecurityReform} onChange={setPolicyField("socialSecurityReform")} help="Benefit formula and payroll cap. Slow but durable." swatch={POLICY_SWATCHES.socialSecurityReform} onAskAtlas={onAskAtlas} />
-            <Slider label="Defense posture" value={policy.defensePosture} onChange={setPolicyField("defensePosture")} help="50 is neutral; higher costs more." swatch={POLICY_SWATCHES.defensePosture} onAskAtlas={onAskAtlas} />
-            <Slider label="Climate resilience" value={policy.climateResilience} onChange={setPolicyField("climateResilience")} help="Near-term cost, later disaster savings." swatch={POLICY_SWATCHES.climateResilience} onAskAtlas={onAskAtlas} />
-            <Slider label="Industrial policy" value={policy.industrialPolicy} onChange={setPolicyField("industrialPolicy")} help="Chips, energy, supply-chain resilience." swatch={POLICY_SWATCHES.industrialPolicy} onAskAtlas={onAskAtlas} />
+            {POLICY_FIELDS.map((f) => (
+              <Slider
+                key={f.key}
+                fieldKey={f.key}
+                tierTable={POLICY_TIERS}
+                label={f.label}
+                value={policy[f.key]}
+                onChange={setPolicyField(f.key)}
+                swatch={POLICY_SWATCHES[f.key]}
+                onAskAtlas={onAskAtlas}
+              />
+            ))}
           </div>
         </div>
 
         <div className="card">
-          <h2 className="panel-title">Global pressure controls</h2>
-          <p className="muted">Manual assumptions are blended with live-data adjustments.</p>
+          <h2 className="panel-title">Global pressure</h2>
+          <p className="muted">Manual assumptions blended with live data from Treasury, BLS, and NOAA.</p>
           <div className="slider-grid">
-            <Slider label="Political polarization" value={stress.politicalPolarization} onChange={setStressField("politicalPolarization")} help="Implementation drag" />
-            <Slider label="PAC pressure" value={stress.pacPressure} onChange={setStressField("pacPressure")} help="Organized interest resistance" />
-            <Slider label="Public support" value={stress.publicSupport} onChange={setStressField("publicSupport")} help="Voter tolerance for reform" />
-            <Slider label="Congress margin" value={stress.congressionalMargin} onChange={setStressField("congressionalMargin")} help="Legislative room" />
-            <Slider label="Funding pressure" value={stress.fundingPressure} onChange={setStressField("fundingPressure")} help="Treasury/refinancing strain" />
-            <Slider label="Conflict shock" value={stress.conflictShock} onChange={setStressField("conflictShock")} help="War and security pressure" />
-            <Slider label="Disaster shock" value={stress.disasterShock} onChange={setStressField("disasterShock")} help="Disaster relief and resilience" />
-            <Slider label="Trade disruption" value={stress.tradeDisruption} onChange={setStressField("tradeDisruption")} help="Tariffs and supply shocks" />
+            {STRESS_FIELDS.map((f) => (
+              <Slider
+                key={f.key}
+                fieldKey={f.key}
+                tierTable={STRESS_TIERS}
+                label={f.label}
+                value={stress[f.key]}
+                onChange={setStressField(f.key)}
+              />
+            ))}
           </div>
         </div>
       </div>
