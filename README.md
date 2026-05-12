@@ -1,308 +1,227 @@
-# Global Budget Pressure Map
+# 3D Global Budget Pressure Map
 
-A full-stack geopolitical fiscal simulator that maps global shocks into U.S. budget pressure.
+A full-stack geopolitical fiscal simulator that maps global shocks — wars, trade disruption, disasters, inflation, Treasury funding pressure, polarization, lobbying pressure, public support — into long-run U.S. debt and deficit paths.
 
-The app combines a React frontend, an Express backend, Prisma/SQLite persistence, and server-side government API adapters. Users can adjust fiscal policy levers, change global stress assumptions, pull live government metrics, save scenario runs, and view how those inputs compound into projected debt, deficit, funding pressure, and regional risk.
+> ⚠️ Exploratory teaching model. Not an official forecast. Treat the numbers as scenario sketches, not predictions.
 
-## Why this project?
+**Live demo:** _add deployment URL here_
+**Demo video / GIF:** _add link here_
+**Screenshots:** _add `./docs/dashboard.png` and `./docs/globe.png` before submitting_
 
-Most budget simulators feel like spreadsheets. Useful, but dry. This project tries to make macroeconomic policy feel more like a live systems map: wars, trade shocks, disasters, inflation, Treasury funding pressure, political constraints, and PAC-style lobbying pressure all flow into one visual model of U.S. fiscal balance.
+---
 
-The goal is not to produce official forecasts. The goal is to help users reason about fiscal tradeoffs and second-order effects.
+## What it does
 
-## Features
+- Adjust **fiscal policy levers** (revenue reform, discretionary cuts, healthcare, Social Security, defense, climate, industrial policy).
+- Adjust **global stress dials** (polarization, PAC pressure, public support, congressional margin, funding pressure, conflict, disasters, trade).
+- Pull **live government metrics** server-side from Treasury, BLS, and NOAA/NWS. Those metrics nudge the stress dials automatically.
+- Watch a **rotating 3D-style SVG globe** show shock transmission paths from world regions into a single U.S. budget impact node.
+- See charts of debt/GDP, deficit/GDP, federal deficit dollars, and regional impact update live.
+- Apply **scenario presets** or **save scenario runs** to the SQLite database via Prisma.
 
-- Interactive 3D-style rotating globe built with SVG spherical projection
-- Global risk nodes for North America, Europe, the Middle East, East Asia, Latin America, Africa, and the Arctic/climate belt
-- Fiscal policy sliders for revenue reform, discretionary spending, healthcare efficiency, Social Security reform, defense posture, climate resilience, and industrial policy
-- Global stress controls for conflict, disasters, trade disruption, funding pressure, political polarization, public support, congressional margins, and lobbying pressure
-- Server-side government API adapters
-- Scenario persistence through Prisma and SQLite
-- Charts for debt-to-GDP, deficit-to-GDP, federal deficit dollars, and regional impact
-- Backend API routes for metrics and saved scenarios
+## Stack
 
-## Tech Stack
+**Frontend** — React, Vite, Recharts, Framer Motion, custom SVG spherical projection.
+**Backend** — Node.js, Express, Prisma ORM, SQLite, Zod, server-side government API adapters.
+**New tech learned (per challenge requirement):** Prisma.
 
-### Frontend
+### Government data sources (all called server-side)
 
-- React
-- Vite
-- Recharts
-- Framer Motion
-- SVG projection math for the globe
+| Source | What we read | Used to push |
+| --- | --- | --- |
+| Treasury Fiscal Data — Debt to the Penny | Total public debt | Funding pressure |
+| Treasury Fiscal Data — Average interest rates | Weighted marketable rate | Funding pressure |
+| BLS — CPI-U (`CUUR0000SA0`) | YoY inflation | Trade disruption + funding pressure |
+| BLS — Unemployment (`LNS14000000`) | Headline rate | Public support ↓, polarization ↑ |
+| NOAA / NWS — Active alerts | Count of active U.S. alerts | Disaster shock |
 
-### Backend
+The React app **never** calls these directly — only the backend does.
 
-- Express
-- Prisma ORM
-- SQLite
-- Zod validation
-- Server-side government API calls
-
-### Government data sources
-
-The backend currently connects to:
-
-- U.S. Treasury Fiscal Data API
-  - Debt to the Penny
-  - Average Treasury interest rates
-- Bureau of Labor Statistics public API
-  - CPI-U inflation proxy
-  - unemployment rate
-- NOAA / National Weather Service API
-  - active U.S. weather alerts
-
-Future adapters could add:
-
-- CBO baselines and budget options
-- FEC campaign finance and PAC pressure
-- USAspending award-level spending
-- NOAA / NCEI billion-dollar disaster history
-
-## Project Structure
+## Project structure
 
 ```txt
 global-budget-pressure-map/
-  client/
-    src/
-      App.jsx
-      main.jsx
-      style.css
-    package.json
-    vite.config.js
-  server/
-    prisma/
-      schema.prisma
-    src/
-      governmentSources.js
-      index.js
-      lib/prisma.js
-      routes/governmentMetrics.js
-      routes/scenarios.js
-    .env.example
-    package.json
-  package.json
-  README.md
+├─ client/
+│  ├─ index.html
+│  ├─ vite.config.js
+│  └─ src/
+│     ├─ App.jsx
+│     ├─ main.jsx
+│     ├─ style.css
+│     ├─ components/   (Globe, GovernmentPanel, Controls, Charts, PersistencePanel)
+│     ├─ hooks/        (useGovernmentData, useScenarioPersistence)
+│     └─ lib/          (simulation, globeProjection, regions, presets, api)
+├─ server/
+│  ├─ prisma/schema.prisma
+│  ├─ test/simulation.test.js
+│  └─ src/
+│     ├─ index.js
+│     ├─ simulation.js
+│     ├─ governmentSources.js
+│     ├─ lib/prisma.js
+│     └─ routes/  (governmentMetrics.js, scenarios.js)
+├─ scripts/setup-env.mjs
+├─ package.json
+└─ README.md
 ```
 
-## Setup Instructions
-
-### 1. Clone the repo
+## Setup
 
 ```bash
 git clone <your-repo-url>
 cd global-budget-pressure-map
+npm run install:all   # installs both client/ and server/
+npm run db:push       # creates server/prisma/dev.db via Prisma
+npm run dev           # runs client (5173) and server (4000) together
 ```
 
-### 2. Install dependencies
+The Vite dev server proxies `/api/*` to `http://localhost:4000`, so the frontend always calls the backend on the same origin.
+
+The `setup` step auto-copies `server/.env.example` → `server/.env` on the first run. Adjust `DATABASE_URL` or `PORT` there. Optional: register at the BLS for an API key and set `BLS_API_KEY` in `server/.env` for a higher rate limit.
+
+### Tests
 
 ```bash
-npm run install:all
+npm test
 ```
 
-### 3. Configure the backend environment
+Runs Node's built-in test runner against the fiscal model. Sanity tests confirm:
 
-```bash
-cp server/.env.example server/.env
-```
+- Projection spans 2026 → 2056.
+- Stronger shocks raise the long-run debt path.
+- Stronger reforms lower the long-run debt path.
+- Government metrics push the expected stress dials.
+- The SVG spherical projection returns finite coordinates everywhere.
 
-The default database is SQLite:
-
-```env
-DATABASE_URL="file:./dev.db"
-PORT=4000
-```
-
-### 4. Create the database
-
-```bash
-npm run db:push
-```
-
-### 5. Run the full stack app
-
-```bash
-npm run dev
-```
-
-The frontend runs on:
-
-```txt
-http://localhost:5173
-```
-
-The backend runs on:
-
-```txt
-http://localhost:4000
-```
-
-## API Endpoints
-
-### Health check
+## API endpoints
 
 ```http
-GET /api/health
-```
-
-### Government metrics
-
-```http
-GET /api/government-metrics
-GET /api/government-metrics/:sourceId
-```
-
-Supported `sourceId` values:
-
-```txt
-treasury-debt
-treasury-rates
-bls-cpi
-bls-unemployment
-nws-alerts
-```
-
-### Scenarios
-
-```http
-GET /api/scenarios
-GET /api/scenarios/:id
-POST /api/scenarios
+GET    /api/health
+GET    /api/government-metrics
+GET    /api/government-metrics/:sourceId    # treasury-debt | treasury-rates | bls-cpi | bls-unemployment | nws-alerts
+GET    /api/scenarios                       # newest first, max 25
+GET    /api/scenarios/:id
+POST   /api/scenarios
 DELETE /api/scenarios/:id
 ```
 
-The `POST /api/scenarios` endpoint persists the current run, including:
+Each metric is normalized to:
 
-- policy settings
-- manual stress settings
-- live-data adjusted stress settings
-- government data snapshot
-- regional impact results
-- summary outputs
+```json
+{
+  "sourceId": "treasury-debt",
+  "label": "Debt to the Penny",
+  "agency": "U.S. Treasury Fiscal Data",
+  "metricKey": "debtTrillions",
+  "status": "live | cached | offline | empty",
+  "value": 36.21,
+  "display": "$36.21T",
+  "asOf": "2026-04-30",
+  "fetchedAt": "2026-05-11T18:02:00.000Z"
+}
+```
 
-## Data Model
+If an upstream API fails, the backend falls back to the last successful value cached in SQLite (`status: "cached"`) instead of crashing. If there is no cache yet, it returns `status: "offline"` with a `null` value.
 
-The app stores scenario JSON as text fields in SQLite through Prisma. That was a deliberate tradeoff: for a prototype, flexible JSON snapshots are easier to iterate on than a heavily normalized schema.
+## Data model
 
-In a production version, I would split this into normalized tables:
+```prisma
+model Scenario {
+  id                String   @id @default(cuid())
+  name              String
+  notes             String?
+  policyJson        String
+  manualStressJson  String
+  derivedStressJson String
+  liveDataJson      String
+  regionsJson       String
+  summaryJson       String
+  createdAt         DateTime @default(now())
+}
 
-- `Scenario`
-- `PolicyInput`
-- `StressInput`
-- `MetricSnapshot`
-- `ProjectionPoint`
-- `RegionalImpact`
+model MetricCache {
+  id          String   @id @default(cuid())
+  sourceId    String   @unique
+  label       String
+  agency      String
+  value       Float?
+  display     String
+  asOf        String?
+  status      String
+  payloadJson String?
+  fetchedAt   DateTime @default(now())
+}
+```
 
-## Learning Journey
+I deliberately stored the scenario snapshots as JSON text rather than normalizing them. That was a tradeoff: faster to iterate, easier to extend the simulation, but harder to aggregate across runs. The route handlers `JSON.parse` the fields back into objects before returning them — so consumers of the API never see raw JSON strings.
 
-### What inspired this project?
+## Learning journey
 
-I wanted to build a fiscal simulator that felt less like a spreadsheet and more like a geopolitical control room. Budget policy is usually presented as tax/spending math, but real-world fiscal pressure also comes from wars, inflation, disasters, trade shocks, supply chains, political incentives, and interest rates.
-
-The idea was to make those pressures visible.
+### Inspiration
+Budget simulators usually look like a spreadsheet of CBO line items. I wanted something that *feels* like the actual problem: a control room watching the world push and pull on the federal balance sheet. Wars, disasters, inflation, lobbying, and political polarization all flow into one number — the long-run debt path.
 
 ### Potential impact
+For a student, civic-curious user, or junior analyst, this makes a few things concrete:
+- Interest costs feed back into the deficit once debt/GDP runs hot.
+- Polarization and PAC pressure haircut even well-designed reforms.
+- A 2-point CPI surprise can outweigh a small reform package.
 
-This could help students, policy analysts, or civically curious users understand why fiscal policy is hard. A reform package can look good in isolation, but once you add interest costs, political resistance, emergency spending, and global shocks, the tradeoffs become much more realistic.
+It is not a replacement for CBO modeling. It is a teaching tool with a backbone of real data.
 
-It is not a replacement for official CBO modeling. It is a teaching and exploration tool.
+### New tech: Prisma
+I had only used raw SQL and a query builder before. Prisma's schema → generated client → typed `findUnique`/`upsert` workflow was the new piece for me. The `MetricCache.upsert` pattern for the government metric cache was the moment it clicked — one declarative call instead of a SELECT-then-INSERT race.
 
-### New technology learned
+## Technical rationale
 
-I used Prisma as the new technology. I chose it because it gives a clean way to define a database schema, generate a client, and persist structured scenario data without writing raw SQL for every query.
+**Why an SVG globe instead of WebGL?** Debuggability. The projection is one `Math.cos/Math.sin` block; I can stop and inspect every point. A WebGL globe would look better but pulls in a much heavier dependency stack for what is fundamentally a metaphor, not a map.
 
-I also learned more about building server-side adapters for public APIs. The important design point was that external API calls should happen on the backend, not in the React client.
+**Why a JSON-blob schema for scenarios?** The simulation is still changing. A normalized schema would force a migration every time I add a slider. JSON columns let me keep moving while still satisfying "data is persisted to a database."
 
-## Technical Rationale
+**Why mirror the simulation in `client/src/lib/simulation.js` *and* `server/src/simulation.js`?** The frontend needs the model to be synchronous so sliders feel instant. The backend keeps its own copy so the unit tests can run without a browser. They're intentionally kept identical.
 
-### Frontend structure
+**Biggest tradeoff:** realism vs. shippability. A more honest model would need stochastic interest paths, CBO option scoring, distributional outputs. I cut all of that to ship a working, interactive, full-stack app on time.
 
-The frontend is built around one main simulation flow:
+**Hardest bug:** the BLS API. My first version did `GET /publicAPI/v2/timeseries/data/CUUR0000SA0`. That works, but for unregistered users it only returns the current calendar year — so the YoY calculation needed a value from the previous year that wasn't in the response and silently fell through to a degenerate "raw index value" display. The fix was to switch to `POST` with an explicit `startyear`/`endyear` window so we always get 24+ months back. (See `server/src/governmentSources.js`, `fetchBlsSeries`.) Optional `BLS_API_KEY` env var unlocks more history.
 
-1. Load government metrics from the backend.
-2. Blend those metrics into the user's manual stress assumptions.
-3. Run the fiscal projection model.
-4. Build regional impact scores.
-5. Visualize the results through cards, charts, and the globe.
-6. Save scenario snapshots through the backend.
+## AI usage
 
-The globe is SVG-based rather than WebGL. That was intentional. WebGL would look cooler, but SVG projection math is easier to debug, easier to deploy, and avoids a large dependency stack.
+I used AI assistants (ChatGPT and Claude) as coding collaborators throughout this project. I wrote, edited, and reviewed every file myself — but pair-programmed with a model.
 
-### Backend structure
+One specific prompt I used:
 
-The backend has two main route groups:
+> "Help me turn this fiscal simulator frontend into a full-stack app that requires a backend, database persistence, and server-side external API calls. Use government APIs for Treasury debt, BLS inflation/unemployment, and NOAA weather alerts. Keep the app beginner-deployable."
 
-- `governmentMetrics`
-- `scenarios`
+The first AI draft tried to call Treasury and NOAA from the React app directly. I refactored everything so the React app only talks to my own `/api/*` endpoints, with the external calls living behind `governmentSources.js`. I also rejected the AI's initial schema (a separate row per slider value, separate metric history table) in favor of JSON blobs, because the model was still in flux. Later in the project I used AI specifically to:
 
-Government API calls live on the server so the frontend stays clean and API keys can be protected if future sources require them.
+- generate the regression-style unit tests in `server/test/simulation.test.js`,
+- write the CSS for the `status` badges (`live`, `cached`, `offline`, `empty`),
+- debug the BLS YoY bug above.
 
-Scenario persistence lives in the backend so saved runs can survive refreshes, be compared later, and eventually be shared between users.
+Everywhere the AI suggested over-engineered patterns (Redux, normalized DB schema, a separate transformation service), I cut them. The goal was a focused, beginner-deployable full-stack app.
 
-### Tradeoffs
+## Before submitting
 
-The biggest tradeoff was realism versus buildability.
+- [ ] `npm run install:all`
+- [ ] `npm run db:push`
+- [ ] `npm run dev`
+- [ ] Save at least one scenario through the UI
+- [ ] `npm test` is green
+- [ ] Add `docs/dashboard.png` and `docs/globe.png` screenshots
+- [ ] Add a 30-60s demo video or GIF
+- [ ] Test the README setup steps on a fresh clone (`rm -rf node_modules client/node_modules server/node_modules server/.env server/prisma/dev.db && npm run install:all && npm run db:push && npm run dev`)
+- [ ] Fill in the deployed app URL at the top of this file
 
-A truly rigorous fiscal model would require much more serious baseline modeling, CBO option scoring, distributional effects, macro feedback, and uncertainty intervals. For this challenge, I prioritized a working full-stack app with visible interactivity and a clear data pipeline.
+## Deployment notes
 
-Another tradeoff was database design. I stored scenario snapshots as JSON strings because the project is exploratory. A normalized schema would be better for analytics, but slower to iterate on.
+- Frontend: Netlify, Vercel, or Render static site.
+- Backend: Render or Railway web service.
+- Database: SQLite is fine for the demo. For production, switch Prisma's `datasource db` provider to PostgreSQL and run `prisma migrate deploy`.
 
-### Hardest bug
+## Future improvements
 
-The hardest bug was moving API calls from the frontend to the backend. At first, it was tempting to fetch Treasury, BLS, and NOAA directly from the browser. That worked sometimes, but it violated the project requirement that external API calls happen from the server and it could fail because of CORS or API policy.
-
-The fix was to build a backend adapter layer:
-
-```txt
-Frontend -> /api/government-metrics/:sourceId -> external government API
-```
-
-That made the architecture cleaner, safer, and easier to extend.
-
-## AI Usage
-
-I used ChatGPT as a coding collaborator.
-
-One useful prompt was:
-
-```txt
-Help me turn this fiscal simulator frontend into a full-stack app that requires a backend, database persistence, and server-side external API calls. Use government APIs for Treasury debt, BLS inflation/unemployment, and NOAA weather alerts. Keep the app beginner-deployable.
-```
-
-The first AI output leaned too heavily on client-side API calls. I had to refactor it so the React app only called my own backend endpoints. I also simplified the database design by storing scenario snapshots as JSON strings in SQLite, which made the project easier to finish and debug.
-
-## Screenshots / Demo
-
-Add screenshots here before submitting:
-
-```md
-![Dashboard screenshot](./docs/dashboard.png)
-![3D globe screenshot](./docs/globe.png)
-```
-
-A short demo video or GIF would be even better. Show:
-
-1. Loading government metrics
-2. Changing global stress sliders
-3. Watching the globe and charts update
-4. Saving a scenario
-5. Refreshing and seeing the saved scenario persist
-
-## Deployment Notes
-
-A simple deployment setup:
-
-- Frontend: Netlify or Render static site
-- Backend: Render web service
-- Database: SQLite for demo, PostgreSQL for production
-
-For production, switch Prisma from SQLite to PostgreSQL.
-
-## Future Improvements
-
-- Add real CBO baseline ingestion
-- Add FEC campaign finance data for actual PAC pressure
-- Add USAspending data for federal spending categories
-- Add uncertainty intervals and Monte Carlo simulations
-- Add user accounts and scenario sharing
-- Add a true WebGL globe with drag rotation and 3D arcs
+- CBO baseline ingestion and option scoring.
+- FEC campaign finance data to make PAC pressure a real signal.
+- USAspending integration for agency-level spending breakdowns.
+- Monte Carlo uncertainty intervals on the debt path.
+- WebGL globe with drag-to-rotate and 3D arcs.
+- Accounts and shareable scenario links.
