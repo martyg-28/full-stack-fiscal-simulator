@@ -9,8 +9,8 @@
     "dev": "npm run setup && concurrently -n server,client -c blue,magenta \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "server": "npm run dev --prefix server",
     "client": "npm run dev --prefix client",
-    "build": "npm run install:all && npm run build --prefix client",
-    "start": "npm --prefix server run db:push -- --accept-data-loss && npm --prefix server start",
+    "build": "npm run install:all && npm run build --prefix client && npm --prefix server run db:push -- --accept-data-loss",
+    "start": "npm --prefix server start",
     "db:push": "npm run setup && npm run db:push --prefix server",
     "db:studio": "npm run db:studio --prefix server",
     "test": "npm test --prefix server"
