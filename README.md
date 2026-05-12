@@ -266,7 +266,7 @@ I used ChatGPT as a coding collaborator.
 One useful prompt was:
 
 ```txt
-Help me turn this fiscal simulator frontend into a full-stack app that satisfies a challenge requiring a backend, database persistence, and server-side external API calls. Use government APIs for Treasury debt, BLS inflation/unemployment, and NOAA weather alerts. Keep the app beginner-deployable.
+Help me turn this fiscal simulator frontend into a full-stack app that requires a backend, database persistence, and server-side external API calls. Use government APIs for Treasury debt, BLS inflation/unemployment, and NOAA weather alerts. Keep the app beginner-deployable.
 ```
 
 The first AI output leaned too heavily on client-side API calls. I had to refactor it so the React app only called my own backend endpoints. I also simplified the database design by storing scenario snapshots as JSON strings in SQLite, which made the project easier to finish and debug.
