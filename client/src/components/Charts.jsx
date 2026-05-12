@@ -56,16 +56,6 @@ export default function Charts({ rows, regions }) {
         </div>
       </div>
 
-      <div className="card">
-        <h2 className="panel-title">What this satisfies</h2>
-        <ul className="muted" style={{ lineHeight: 1.7, paddingLeft: 18 }}>
-          <li>Frontend: React + Vite, Recharts, Framer Motion, SVG globe.</li>
-          <li>Backend: Express API on port 4000.</li>
-          <li>Database: Prisma + SQLite for scenario persistence and a metric cache.</li>
-          <li>External APIs (server-side): Treasury Fiscal Data, BLS, NOAA / NWS.</li>
-          <li>Dynamic functionality: live sliders, presets, 3D globe, scenario save/delete.</li>
-        </ul>
-      </div>
     </div>
   );
 }
