@@ -1145,10 +1145,65 @@ button, input, select { font: inherit; color: inherit; }
 /* ---------- Active walkthrough (non-blocking dock) ---------- */
 .walkthrough-dock {
   position: fixed;
-  left: 24px;
   bottom: 24px;
   z-index: 100;
-  width: min(420px, calc(100vw - 48px));
+  width: min(380px, calc(100vw - 48px));
+}
+.walkthrough-dock.left { left: 24px; }
+/* Right-side variant sits above the Atlas FAB (FAB is at bottom: 24px, ~64px tall) */
+.walkthrough-dock.right { right: 24px; bottom: 110px; }
+
+.walkthrough-min {
+  background: transparent;
+  border: 0;
+  color: var(--ink-soft);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+.walkthrough-min:hover { color: var(--accent-forest); }
+
+.walkthrough-pill {
+  position: fixed;
+  bottom: 24px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--accent-forest);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  color: var(--ink);
+  max-width: min(360px, calc(100vw - 48px));
+}
+.walkthrough-pill.left { left: 24px; }
+.walkthrough-pill.right { right: 24px; bottom: 110px; }
+.walkthrough-pill:hover { transform: translate(-1px, -1px); box-shadow: 7px 7px 0 var(--accent-forest); }
+
+.walkthrough-pill-num {
+  color: var(--accent-forest);
+  font-weight: 600;
+}
+.walkthrough-pill-title {
+  font-family: "Fraunces", serif;
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.walkthrough-pill-chev {
+  color: var(--ink-mute);
+  font-size: 9px;
 }
 
 .walkthrough-card {
@@ -1165,6 +1220,9 @@ button, input, select { font: inherit; color: inherit; }
   text-transform: uppercase;
   color: var(--accent-forest);
   margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .walkthrough-title {

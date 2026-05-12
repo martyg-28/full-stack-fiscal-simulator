@@ -88,6 +88,7 @@ export default function Tutorial({
 }) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
+  const [minimized, setMinimized] = useState(false);
   const lastForceRef = useRef(forceOpen);
 
   // First-run auto-open: only on initial mount, only if not previously dismissed.
@@ -145,11 +146,40 @@ export default function Tutorial({
   if (!open) return null;
   const s = STEPS[step];
 
+  // First step is the role-selection screen; the role card sits on the left
+  // side of the layout, so dock the walkthrough to the right to avoid hiding
+  // it. From step 2 onward the right side is busy (radar, story, charts) so
+  // we move back to the left.
+  const dockSide = s.targetStep === "role" ? "right" : "left";
+
+  if (minimized) {
+    return (
+      <button
+        type="button"
+        className={`walkthrough-pill ${dockSide}`}
+        onClick={() => setMinimized(false)}
+        aria-label="Re-open walkthrough"
+      >
+        <span className="walkthrough-pill-num">{step + 1}/{STEPS.length}</span>
+        <span className="walkthrough-pill-title">{s.title}</span>
+        <span className="walkthrough-pill-chev">▲</span>
+      </button>
+    );
+  }
+
   return (
-    <div className="walkthrough-dock" role="dialog" aria-label="Studium walkthrough">
+    <div className={`walkthrough-dock ${dockSide}`} role="dialog" aria-label="Studium walkthrough">
       <div className="walkthrough-card">
         <div className="walkthrough-step-counter">
-          Walkthrough · Step {step + 1} of {STEPS.length}
+          <span>Walkthrough · Step {step + 1} of {STEPS.length}</span>
+          <button
+            type="button"
+            className="walkthrough-min"
+            onClick={() => setMinimized(true)}
+            aria-label="Minimize walkthrough"
+          >
+            —
+          </button>
         </div>
         <h2 className="walkthrough-title">{s.title}</h2>
         <p className="walkthrough-body">{s.body}</p>
