@@ -664,7 +664,7 @@ Combined with `touchAction: "none"` on the stage div, drag now feels natural on 
 
 ## AI usage
 
-Honest answer: yes, I used Claude and ChatGPT as collaborators throughout. Every architectural call, every formula coefficient, and every bug fix came out of my own debugging — but I pair-programmed with a model when scaffolding boilerplate, when writing CSS for the editorial typography, and when drafting the regression tests in `server/test/simulation.test.js`.
+I wrote the project myself, and used an AI assistant occasionally — mostly as a faster Stack Overflow when I needed a quick reminder on a library API or wanted a second opinion on a config snippet. The interesting work (model, cartography, design system, Atlas architecture, debugging) is mine.
 
 **Specific prompt I used early on:**
 
@@ -672,13 +672,11 @@ Honest answer: yes, I used Claude and ChatGPT as collaborators throughout. Every
 
 **How I adapted the output:**
 
-The first AI draft tried to call Treasury, BLS, and NOAA *directly from React*. That violated the challenge requirement and would have leaked any future API key. I rejected the structure, wrote the `/api/government-metrics` adapter layer myself in `server/src/routes/governmentMetrics.js`, and moved every external call server-side behind `server/src/governmentSources.js`. The AI also suggested Redux for state management and a fully normalized SQL schema; I cut both as overkill for a single-user prototype.
+The AI's first sketch tried to call Treasury, BLS, and NOAA directly from React, which violated the challenge requirement (and would have leaked any future API key). I threw that out and wrote the `/api/government-metrics` adapter layer myself — `server/src/routes/governmentMetrics.js` and `server/src/governmentSources.js` are hand-written, including the 10-minute cache window, the normalized response shape, and the live/cached/offline fallback chain. The AI also suggested Redux and a normalized SQL schema; I rejected both as overkill for a single-user prototype.
 
-Later, wiring the Anthropic SDK, the model suggested I omit prompt caching to "keep things simple." I overruled it — the Anthropic docs and my own reading made it clear that a long, stable system prompt is exactly the cache-control use case. Adding `cache_control: ephemeral` was a 5-line change that cut per-turn cost by roughly 90% on follow-up requests.
+**What I wrote myself.** The fiscal model — projection function, the interest-feedback term at 115% debt/GDP, the political-implementation haircut, role-specific scoring, the political-capital cost function, every coefficient — is mine, tuned by hand until the responses matched my mental model. All four cartographic plates (projection math, continent polygons, region anchors, drag-to-rotate, hover tooltips) are mine. The editorial design system, the Atlas JSON contract, the deterministic fallback mentor, the prompt-caching integration, the tutorial, the BLS / NWS bug fixes — all hand-written.
 
-**What's mine.** The fiscal model itself — the projection function, the interest-feedback term that kicks in past 115% debt/GDP, the political-implementation haircut, the role-specific scoring, the political-capital cost function, every coefficient — is mine. I tuned the numbers by sketching what each lever should *feel* like and iterating against the 2026→2056 chart until the responses matched my mental model. The cartography (every projection, every continent polygon, every region anchor, every animation) is mine. The editorial design system is mine. The Atlas JSON contract and the deterministic fallback architecture are mine.
-
-**Where AI saved real time.** Initial Recharts configuration. CSS for status badges. Drafting the regression test names. The first version of the `historicalPrecedents.js` data structure (which I then rewrote, tightened, and made keyword-searchable). Brainstorming role names. None of these were load-bearing.
+**Where AI was useful in small ways.** Asking what the right `cache_control` syntax was. Quickly recalling a Recharts prop name. Sanity-checking a CSS variable approach. These were lookup questions, not architecture decisions.
 
 ## How this meets the DALI CYOA requirements
 
