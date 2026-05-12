@@ -2,11 +2,19 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { suggestedPrompts, depthLabels, modeLabels } from "../lib/atlasPrompts.js";
 import { useSpeech } from "../hooks/useSpeech.js";
 
-const INTRO = {
-  answer:
-    "Hi, I'm Atlas. I help students reason about why the model moves and how to defend their policy package. Ask me anything, or tap a prompt below. Switch to voice mode and we can run a Socratic seminar.",
-  keyConcept: "Welcome",
-};
+function buildIntro(step) {
+  if (!step) {
+    return {
+      answer:
+        "Hi, I'm Atlas. I help students reason about why the model moves and how to defend their policy package. Ask me anything, or tap a prompt below.",
+      keyConcept: "Welcome",
+    };
+  }
+  return {
+    answer: `Hi — I see you're on ${step}. I'll keep my suggestions tied to what you're doing right now. Ask me anything, tap a prompt, or switch to voice mode for a Socratic seminar.`,
+    keyConcept: "Welcome",
+  };
+}
 
 export default function AtlasMentor({ context, externalAsk }) {
   const [open, setOpen] = useState(false);
@@ -14,7 +22,8 @@ export default function AtlasMentor({ context, externalAsk }) {
   const [mode, setMode] = useState("explain");
   const [depth, setDepth] = useState("standard");
   const [voiceOn, setVoiceOn] = useState(false);
-  const [messages, setMessages] = useState([{ role: "atlas", content: INTRO }]);
+  const [messages, setMessages] = useState([{ role: "atlas", content: buildIntro(context?.currentStep) }]);
+  const lastStepRef = useRef(context?.currentStep);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef(null);
@@ -94,7 +103,31 @@ export default function AtlasMentor({ context, externalAsk }) {
     }
   }
 
-  const chips = useMemo(() => suggestedPrompts[mode] || [], [mode]);
+  // Insert a context note whenever the active step changes, so Atlas's chat
+  // history shows the student "I'm now on step N" without an extra click.
+  useEffect(() => {
+    const step = context?.currentStep;
+    if (step && step !== lastStepRef.current) {
+      lastStepRef.current = step;
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "atlas",
+          content: {
+            answer: `You're now on: ${step}. I've updated the suggested prompts to match.`,
+            keyConcept: "Step update",
+          },
+        },
+      ]);
+    }
+  }, [context?.currentStep]);
+
+  // Suggested chips: prefer the current step's bespoke prompts, fall back to
+  // the mode's standard chips.
+  const chips = useMemo(() => {
+    if (context?.currentStepPrompts?.length) return context.currentStepPrompts;
+    return suggestedPrompts[mode] || [];
+  }, [mode, context?.currentStepPrompts]);
 
   function toggleVoice() {
     if (!speech.supported) return;

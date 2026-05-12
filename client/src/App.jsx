@@ -32,6 +32,8 @@ import ScenarioStory from "./components/ScenarioStory.jsx";
 import PrecedentTimeline from "./components/PrecedentTimeline.jsx";
 import { ROLES, rolesById } from "./lib/roles.js";
 import { computeAxes } from "./lib/scoreAxes.js";
+import { STEPS, stepsById, panelVisible } from "./lib/steps.js";
+import StepperBar from "./components/StepperBar.jsx";
 
 const initialPolicy = scenarioPresets[0].policy;
 const initialStress = scenarioPresets[0].stress;
@@ -83,6 +85,13 @@ export default function App() {
   const [externalAsk, setExternalAsk] = useState(null);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [selectedRoleId, setSelectedRoleId] = useState(ROLES[0].id);
+  const [currentStepId, setCurrentStepId] = useState(STEPS[0].id);
+  const [advancedView, setAdvancedView] = useState(false);
+  const stepIdx = STEPS.findIndex((s) => s.id === currentStepId);
+  const goNext = () => { const next = STEPS[Math.min(stepIdx + 1, STEPS.length - 1)]; setCurrentStepId(next.id); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const goBack = () => { const prev = STEPS[Math.max(stepIdx - 1, 0)]; setCurrentStepId(prev.id); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const isVisible = (panelId) => panelVisible(panelId, currentStepId, advancedView);
+  const currentStep = stepsById[currentStepId];
 
   const govData = useGovernmentData();
   const derivedStress = useMemo(() => applyRealDataToStress(stress, govData.metrics), [stress, govData.metrics]);
@@ -127,6 +136,8 @@ export default function App() {
     selectedRegion: selectedRegion?.label,
     selectedRole: selectedRole.label,
     scenarioPreset: presetLabel,
+    currentStep: currentStep?.label,
+    currentStepPrompts: currentStep?.prompts,
     summary: {
       sustainabilityScore: Number(score.toFixed(1)),
       politicalViability: Number(probability.toFixed(1)),
@@ -173,6 +184,16 @@ export default function App() {
       <EditorialMasthead onOpenTour={() => setTutorialOpen(true)} />
 
       <div className="shell">
+        <StepperBar
+          currentStepId={currentStepId}
+          onSelect={setCurrentStepId}
+          onNext={goNext}
+          onBack={goBack}
+          advancedView={advancedView}
+          setAdvancedView={setAdvancedView}
+        />
+
+        {isVisible("hero") && (
         <section className="hero">
           <div>
             <span className="eyebrow"><span className="pip"></span>Vol. I — The Policy Simulation Studio</span>
@@ -203,9 +224,11 @@ export default function App() {
             <span className="balance-tag">Index, 0–100 · higher is more sustainable</span>
           </div>
         </section>
+        )}
 
-        <ClassMissionCard />
+        {isVisible("mission") && <ClassMissionCard />}
 
+        {isVisible("dossier") && (
         <section className="dossier">
           <DossierEntry
             figure="fig. 01"
@@ -236,11 +259,13 @@ export default function App() {
             onWhy={() => askAtlas("Explain borrowing pressure in this run.")}
           />
         </section>
+        )}
 
         <div className="disclaimer">
           Studium is an exploratory classroom model · Not an official fiscal forecast
         </div>
 
+        {isVisible("role") && (
         <RoleHUD
           selectedRoleId={selectedRoleId}
           setSelectedRoleId={setSelectedRoleId}
@@ -248,8 +273,11 @@ export default function App() {
           roleScore={roleScore}
           onAskAtlas={askAtlas}
         />
+        )}
 
+        {(isVisible("radar") || isVisible("story")) && (
         <section className="grid2">
+          {isVisible("radar") && (
           <div className="card">
             <div className="card-head">
               <div>
@@ -259,12 +287,19 @@ export default function App() {
             </div>
             <TradeoffRadar axes={tradeoffAxes} onAskAtlas={askAtlas} />
           </div>
+          )}
+          {isVisible("story") && (
           <ScenarioStory context={{ ...atlasContext, summary: { ...atlasContext.summary, ...tradeoffAxes } }} />
+          )}
         </section>
+        )}
 
+        {isVisible("government") && (
         <GovernmentPanel govData={govData} manualStress={stress} derivedStress={derivedStress} onAskAtlas={askAtlas} />
+        )}
 
-        {/* ---------- Cartography: two maps side by side ---------- */}
+        {isVisible("maps") && (
+        <>
         <section className="maps-grid">
           <div className="map-cell">
             <div className="map-label">Plate I · Transmission map</div>
@@ -309,12 +344,10 @@ export default function App() {
           </div>
         </section>
 
-        <PrecedentTimeline onAskAtlas={(q) => askAtlas(q, "historical-case")} />
-
         <section className="card">
           <div className="card-head">
             <div>
-              <span className="eyebrow"><span className="pip"></span>Plate III · Regional dossier</span>
+              <span className="eyebrow"><span className="pip"></span>Regional dossier</span>
               <h2 className="panel-title">Pressure index by region</h2>
             </div>
             <p className="muted" style={{ maxWidth: 320, margin: 0 }}>
@@ -323,13 +356,37 @@ export default function App() {
           </div>
           <RegionList regions={regions} selectedRegionId={selectedRegionId} onSelect={setSelectedRegionId} />
         </section>
+        </>
+        )}
 
+        {isVisible("history") && (
+        <section className="maps-grid">
+          <div className="map-cell" style={{ gridColumn: "1 / -1" }}>
+            <div className="map-label">Plate IV · Historical reference</div>
+            <h3>Your debt path against four anchors</h3>
+            <HistoricalDebtChart rows={rows} />
+            <div className="map-controls">Hover a reference line for the historical episode</div>
+          </div>
+        </section>
+        )}
+
+        {isVisible("precedents") && (
+        <PrecedentTimeline onAskAtlas={(q) => askAtlas(q, "historical-case")} />
+        )}
+
+        {isVisible("options") && (
         <PolicyOptionsPanel
           selectedOptionIds={selectedOptionIds}
           setSelectedOptionIds={setSelectedOptionIds}
           deltaPctGdp={optionsDelta}
         />
+        )}
+
+        {isVisible("save") && (
         <PersistencePanel persistence={persistence} />
+        )}
+
+        {isVisible("controls") && (
         <Controls
           policy={policy}
           stress={stress}
@@ -337,7 +394,11 @@ export default function App() {
           setStress={setStress}
           onAskAtlas={(leverLabel) => askAtlas(`Explain what happens when I change ${leverLabel} in this model.`)}
         />
+        )}
+
+        {isVisible("charts") && (
         <Charts rows={rows} regions={regions} />
+        )}
       </div>
 
       <AtlasMentor context={atlasContext} externalAsk={externalAsk} />
